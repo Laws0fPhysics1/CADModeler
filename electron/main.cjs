@@ -20,6 +20,7 @@ const { createFeaRunner, feaDefaults } = require("./fea-runner.cjs");
 const { writeFolder } = require("./folder-writer.cjs");
 const { createMcMaster } = require("./mcmaster.cjs");
 const partsStore = require("./parts-store.cjs");
+const updateCheck = require("./update-check.cjs");
 
 const ROOT = path.join(__dirname, "..");
 const DIST = path.join(ROOT, "dist");
@@ -198,6 +199,11 @@ let closeConfirmRegistered = false, closePending = false;
 // Files the user picked in a Save / Open dialog this run: Save can rewrite them without asking again
 const approvedPaths = new Set();
 let allowClose = false;
+// Start-page update check: one git fetch per run, started when the app is ready (never blocks startup).
+// "Update now" sets runUpdaterOnQuit and closes the window through the normal close protocol; the
+// updater bat starts on will-quit, i.e. only if the user didn't cancel the save prompt.
+let updatePromise = null, runUpdaterOnQuit = false;
+const startUpdateCheck = () => (updatePromise ||= updateCheck.checkForUpdates({ root: ROOT, packaged: app.isPackaged }));
 
 function createWindow() {
   const st = loadWindowState();
@@ -261,7 +267,7 @@ function createWindow() {
       const close = () => { allowClose = true; if (!win.isDestroyed()) win.close(); };
       const cleanup = () => { closePending = false; clearTimeout(timer); ipcMain.removeListener("desktop:close-ack", onAck); ipcMain.removeListener("desktop:close-answer", onAnswer); };
       const onAck = (ev) => { if (ev.sender === win.webContents) acked = true; };
-      const onAnswer = (ev, ok) => { if (ev.sender !== win.webContents) return; cleanup(); if (ok) close(); };
+      const onAnswer = (ev, ok) => { if (ev.sender !== win.webContents) return; cleanup(); if (ok) close(); else runUpdaterOnQuit = false; };
       const timer = setTimeout(() => { if (!acked) { cleanup(); close(); } }, 3000);
       ipcMain.on("desktop:close-ack", onAck);
       ipcMain.on("desktop:close-answer", onAnswer);
@@ -379,6 +385,17 @@ function registerIpc() {
     const p = path.resolve(target);
     if (!fs.existsSync(p)) return false;
     shell.showItemInFolder(p);
+    return true;
+  });
+
+  // ---- update check (start page) ----
+  handle("update:check", async () => (SMOKE || EXIT_CHECK ? { state: "unavailable", reason: "test run" } : startUpdateCheck()));
+  // Runs exactly "<app root>/Update CAD Modeler.bat" (no arguments from the renderer), after the app quits
+  handle("update:install", async (event) => {
+    if (app.isPackaged || process.platform !== "win32" || !fs.existsSync(updateCheck.updateBatPath(ROOT))) return false;
+    runUpdaterOnQuit = true;
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win && !win.isDestroyed()) win.close(); else app.quit();
     return true;
   });
 
@@ -588,6 +605,7 @@ async function runSmoke(win) {
         out.partsList = await window.desktop.parts.list();
         try { await window.desktop.parts.open("../package.json"); out.partsTraversal = "NOT BLOCKED"; } catch (e) { out.partsTraversal = "blocked"; }
         out.thumbOutside = await window.desktop.parts.writeThumb("C:/Windows/x.cadm.json", "data:image/png;base64,iVBORw0KGgo=");
+        out.update = await window.desktop.update.check();
         return out;
       })()`);
       const checks = [];
@@ -606,6 +624,7 @@ async function runSmoke(win) {
       checks.push(["fea: writeCase / readResults / guards", isInside(r.feaCase, r.feaCfg.exchangeDir) && r.feaRead && r.feaRead.results && r.feaRead.results.maxVonMises_MPa === 1 &&
         r.feaTraversal === "blocked" && r.feaRunOutside && r.feaRunOutside.ok === false]);
       checks.push(["parts: folder, list, guards", !!(r.partsInfo && r.partsInfo.dir && fs.existsSync(r.partsInfo.dir)) && Array.isArray(r.partsList) && r.partsTraversal === "blocked" && r.thumbOutside === false]);
+      checks.push(["update check answers (unavailable in test runs)", !!(r.update && r.update.state === "unavailable")]);
       if (r.feaCase && isInside(r.feaCase, r.feaCfg.exchangeDir)) fs.rmSync(r.feaCase, { recursive: true, force: true });
       // saveFolder's writer (the IPC handler itself needs a folder dialog, so call the writer directly)
       try {
@@ -714,11 +733,13 @@ if (!SMOKE && !USER_DATA && !app.requestSingleInstanceLock()) {
       return;
     }
     const win = createWindow();
+    if (!SMOKE && !EXIT_CHECK) startUpdateCheck();
     if (SMOKE) runSmoke(win);
     else if (EXIT_CHECK) runExitCheck(win, EXIT_CHECK);
   });
 
   app.on("window-all-closed", () => app.quit());
+  app.on("will-quit", () => { if (runUpdaterOnQuit) { runUpdaterOnQuit = false; try { updateCheck.launchUpdater(ROOT); } catch (e) { console.error(e); } } });
   // A running simulation belongs to this app: ask it to stop (it writes its results) before quitting.
   let quitting = false;
   app.on("before-quit", (e) => {

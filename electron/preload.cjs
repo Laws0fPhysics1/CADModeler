@@ -40,6 +40,12 @@ contextBridge.exposeInMainWorld("desktop", {
     reveal: () => invoke("parts:reveal"),
   },
   saveFolder: (opts) => invoke("desktop:saveFolder", opts),
+  // start-page update check (git clones): check() -> {state: available|current|offline|unavailable, ...};
+  // install() closes the app (save prompt first) and then runs "Update CAD Modeler.bat"
+  update: {
+    check: () => invoke("update:check"),
+    install: () => invoke("update:install"),
+  },
   saveBugReport: (payload) => invoke("desktop:saveBugReport", payload),
   listBugReports: () => invoke("desktop:listBugReports"),
   setBugStatus: (name, st) => invoke("desktop:setBugStatus", name, st),

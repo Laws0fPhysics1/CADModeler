@@ -7,10 +7,11 @@ A single-part parametric 3D modeler that looks and feels like Fusion 360. It run
 1. Install [Git for Windows](https://git-scm.com/download/win) and [Node.js LTS](https://nodejs.org/) (defaults are fine).
 2. Clone the repo: `git clone https://github.com/Laws0fPhysics1/CADModeler.git "CAD Modeler"` (or just run `Get CAD Modeler.bat`)
 3. Double-click **`Update CAD Modeler.bat`** in the cloned folder. It pulls the latest version, installs dependencies, builds and launches the app. Run it again any time to update.
+4. You don't have to remember to check: the start screen says when an update is out ("Update available") and its **Update now** button closes the app and runs `Update CAD Modeler.bat` for you.
 
 Saved designs go in the `Parts` folder inside the app folder (created on first use). Your Parts folder and design files never leave your PC. CFD and FEA studies need the separate CFD Sim / FEA Sim Python projects, so they won't run without those; everything else works.
 
-**Found a bug?** Use the **Bug report** (or Feature request) button inside the app, then double-click **`Send Bug Reports.bat`**. It uploads your reports (memo, recent clicks/keys, screenshot) to the repo's `bugs` branch. Your design file is not included. You need write access to the repo (accept the owner's collaborator invite).
+**Found a bug?** Use the **Bug report** (or Feature request) button inside the app, then double-click **`Send Bug Reports.bat`**. It uploads your reports (memo, recent clicks/keys, screenshot) to the `bugs` branch of your own fork, where the owner collects them. Your design file is not included. One-time setup: a free GitHub account and one click on **Fork** (the script opens the page and walks you through it); no collaborator access is needed. The repo is public, so the reports you send are public too.
 
 ## Run
 

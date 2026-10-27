@@ -384,3 +384,21 @@ export async function revealPath(p) {
 export function onBeforeClose(cb) {
   return desktop ? desktop.onBeforeClose(cb) : () => {};
 }
+
+// ---------- updates (start page) ----------
+export const update = {
+  /**
+   * Desktop git clones: does GitHub (origin/main) have commits this copy doesn't? Resolves to
+   * { state: "available", behind, subject, date } | { state: "current" } | { state: "offline" } |
+   * { state: "unavailable" } (browser, dev server, packaged build, not a clone, no git). Never rejects.
+   */
+  async check() {
+    if (!(desktop && desktop.update)) return { state: "unavailable", reason: "browser" };
+    try { return (await desktop.update.check()) || { state: "unavailable" }; } catch (e) { return { state: "unavailable", reason: String(e.message || e) }; }
+  },
+  /** Close the app (unsaved-changes prompt first) and run "Update CAD Modeler.bat". False if not possible. */
+  async install() {
+    if (!(desktop && desktop.update)) return false;
+    try { return !!(await desktop.update.install()); } catch { return false; }
+  },
+};

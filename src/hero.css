@@ -48,3 +48,26 @@
 .hl-chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hl-show { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8fa9c7; white-space: nowrap; cursor: pointer; }
 @media (max-width: 760px) { .hl-cols { grid-template-columns: 1fr; } }
+
+/* update pill under the title (startUpdatePill in hero.js) */
+.hero-upd { pointer-events: auto; margin-top: 14px; display: flex; align-items: center; gap: 8px; max-width: min(720px, 100%); padding: 4px 6px 4px 12px; border-radius: 14px; background: rgba(14, 22, 32, 0.72); border: 1px solid rgba(127, 166, 208, 0.18); backdrop-filter: blur(6px); font-size: 11.5px; color: #8fa9c7; line-height: 18px; animation: hu-in 0.3s ease; }
+.hero-upd[hidden] { display: none; }
+.hero-upd.hu-checking, .hero-upd.hu-installing { padding-right: 12px; }
+.hu-t { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hu-t b { color: #dce8f6; font-weight: 600; }
+.hu-sub { color: #a9c1dc; }
+.hu-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; background: #58a6ff; animation: hu-pulse 1.4s ease-in-out infinite; }
+.hu-ic { font-style: normal; color: #5fc28a; font-weight: 700; }
+.hero-upd.hu-available, .hero-upd.hu-confirm { border-color: rgba(88, 166, 255, 0.55); color: #cfe0f5; }
+.hero-upd.hu-available .hu-dot { background: #f0b429; }
+.hero-upd.hu-offline { opacity: 0.75; }
+.hu-btn { flex: none; padding: 2px 10px; border-radius: 10px; background: #1f6fd1; color: #fff; font-size: 11.5px; font-weight: 600; line-height: 18px; }
+.hu-btn:hover { background: #2a7ee6; }
+.hu-btn.hu-sec { background: rgba(255, 255, 255, 0.06); color: #cfe0f5; border: 1px solid rgba(127, 166, 208, 0.25); }
+.hu-btn.hu-sec:hover { background: rgba(255, 255, 255, 0.12); }
+.hu-x { flex: none; width: 18px; height: 18px; border-radius: 50%; color: #8fa9c7; font-size: 14px; line-height: 16px; text-align: center; padding: 0; background: transparent; }
+.hu-x:hover { background: rgba(255, 255, 255, 0.1); color: #eef5ff; }
+.hu-btn:focus-visible, .hu-x:focus-visible { outline: 2px solid #9fd0ff; outline-offset: 2px; }
+@keyframes hu-pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+@keyframes hu-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .hero-upd, .hu-dot { animation: none; } }

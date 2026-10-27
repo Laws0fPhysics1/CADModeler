@@ -7,6 +7,7 @@
 // showHero() brings it back (File > Start Page).
 import "./hero.css";
 import { icons } from "./icons.js";
+import { update as platformUpdate, isDesktop } from "./platform.js";
 
 let hero = null;
 
@@ -85,6 +86,7 @@ function startHero(host) {
   const tile = (act) => { const [name, sub, icon, uc] = TILES[act]; return `<button class="hl-tile${uc ? " uc" : ""}" data-act="${act}" title="${uc ? `${name} — under construction` : name}"><i>${icons[icon] || ""}</i><span class="hl-tn">${name}</span><span class="hl-ts">${sub}</span></button>`; };
   over.innerHTML = `
     <div class="hero-title"><div class="hero-name">CAD Modeler</div><div class="hero-tag">Sketch &nbsp;·&nbsp; Model &nbsp;·&nbsp; Simulate</div></div>
+    <div class="hero-upd" role="status" aria-live="polite" hidden></div>
     <div class="hero-launch loading">
       <div class="hero-status"><div class="hero-bar"><i></i></div><div class="hero-msg">Loading geometry kernel…</div></div>
       <div class="hl-panel">
@@ -95,6 +97,7 @@ function startHero(host) {
     </div>`;
   host.append(canvas, over);
   const launch = over.querySelector(".hero-launch");
+  startUpdatePill(over.querySelector(".hero-upd"));
   let running = true;
   const ctx = canvas.getContext("2d");
   const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -288,6 +291,54 @@ function startHero(host) {
     start() { if (running) return; running = true; resize(); requestAnimationFrame(frame); },
     stop() { running = false; },
   };
+}
+
+// ---- update pill (under the title, while loading and on the start page) ----
+// platform.update.check() runs a git fetch in the Electron main process (electron/update-check.cjs), so it
+// never delays loading. States: checking / available / confirm / installing / failed / current / offline;
+// unavailable (browser, not a git clone, no git) shows nothing. Debug: window.__updateState = {state, ...}
+// before load fakes the answer; window.__heroUpdate(state) re-renders with any state.
+function startUpdatePill(el) {
+  if (!el) return;
+  let dismissed = false, last = null;
+  const esc = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const x = `<button class="hu-x" title="Dismiss" aria-label="Dismiss">×</button>`;
+  function render(st) {
+    last = st;
+    const s = st && st.state;
+    if (dismissed || !s || s === "unavailable") { el.hidden = true; el.innerHTML = ""; return; }
+    el.hidden = false;
+    el.className = `hero-upd hu-${s}`;
+    if (s === "checking") el.innerHTML = `<i class="hu-dot"></i><span class="hu-t">Checking for updates…</span>`;
+    else if (s === "current") el.innerHTML = `<i class="hu-ic">✓</i><span class="hu-t">Up to date</span>${x}`;
+    else if (s === "offline") el.innerHTML = `<span class="hu-t">Couldn't check for updates (offline)</span>${x}`;
+    else if (s === "available") {
+      const n = Math.max(1, st.behind | 0);
+      const when = st.date && !isNaN(Date.parse(st.date)) ? new Date(st.date).toLocaleString() : "";
+      el.innerHTML = `<i class="hu-dot"></i><span class="hu-t"><b>Update available:</b> ${n} new change${n === 1 ? "" : "s"}${st.subject ? ` <span class="hu-sub">— ${esc(st.subject)}</span>` : ""}</span><button class="hu-btn">Update now</button>${x}`;
+      el.querySelector(".hu-t").title = [st.subject, when && `Latest change: ${when}`].filter(Boolean).join(String.fromCharCode(10));
+      el.querySelector(".hu-btn").onclick = () => render({ ...st, state: "confirm" });
+    } else if (s === "confirm") {
+      el.innerHTML = `<span class="hu-t">Close CAD Modeler and update? You'll be asked to save open designs first.</span><button class="hu-btn">Close and update</button><button class="hu-btn hu-sec">Cancel</button>`;
+      const [go, cancel] = el.querySelectorAll(".hu-btn");
+      cancel.onclick = () => render({ ...st, state: "available" });
+      go.onclick = async () => {
+        render({ ...st, state: "installing" });
+        const ok = await platformUpdate.install();
+        // still open after a while: the save prompt was cancelled (or the updater couldn't start)
+        if (!ok) render({ ...st, state: "failed" });
+        else setTimeout(() => { if (last && last.state === "installing") render({ ...st, state: "available" }); }, 4000);
+      };
+    } else if (s === "installing") el.innerHTML = `<i class="hu-dot"></i><span class="hu-t">Closing CAD Modeler to update…</span>`;
+    else if (s === "failed") el.innerHTML = `<span class="hu-t">Couldn't start the updater. Close the app and run <b>Update CAD Modeler.bat</b>.</span>${x}`;
+    const xb = el.querySelector(".hu-x");
+    if (xb) xb.onclick = () => { dismissed = true; render(last); };
+  }
+  window.__heroUpdate = (st) => { dismissed = false; render(st); };
+  const fake = window.__updateState;
+  if (!fake && !isDesktop) return; // browser / dev server: nothing to check
+  render({ state: "checking" });
+  (fake ? Promise.resolve(fake) : platformUpdate.check()).then((st) => { if (last && last.state === "checking") render(st); }, () => render({ state: "unavailable" }));
 }
 
 function sub(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
