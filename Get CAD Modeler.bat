@@ -5,7 +5,7 @@ rem Needs Git (https://git-scm.com) and Node.js (https://nodejs.org).
 setlocal EnableDelayedExpansion
 
 rem OWNER: put your GitHub repo URL here before sending this file.
-set "REPO_URL=https://github.com/YOUR-NAME/cad-modeler.git"
+set "REPO_URL=https://github.com/Laws0fPhysics1/CADModeler.git"
 
 title Get CAD Modeler
 if not "!REPO_URL:YOUR-NAME=!"=="!REPO_URL!" (

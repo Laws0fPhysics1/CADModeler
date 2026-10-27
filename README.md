@@ -5,7 +5,7 @@ A single-part parametric 3D modeler that looks and feels like Fusion 360. It run
 ## Getting the app (for friends)
 
 1. Install [Git for Windows](https://git-scm.com/download/win) and [Node.js LTS](https://nodejs.org/) (defaults are fine).
-2. Clone the repo: `git clone <repo URL> "CAD Modeler"`
+2. Clone the repo: `git clone https://github.com/Laws0fPhysics1/CADModeler.git "CAD Modeler"` (or just run `Get CAD Modeler.bat`)
 3. Double-click **`Update CAD Modeler.bat`** in the cloned folder. It pulls the latest version, installs dependencies, builds and launches the app. Run it again any time to update.
 
 Saved designs go in the `Parts` folder inside the app folder (created on first use). Your Parts folder and design files never leave your PC. CFD and FEA studies need the separate CFD Sim / FEA Sim Python projects, so they won't run without those; everything else works.
