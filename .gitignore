@@ -49,3 +49,18 @@ ehthumbs.db
 desktop.ini
 $RECYCLE.BIN/
 .DS_Store
+
+# Owner-only scripts: never uploaded, so friends can't publish code changes
+Publish Changes.bat
+Pull Bug Reports.bat
+
+# CAD part / design files never go to GitHub (examples/ meshes are the only exception)
+*.cadm
+*.cadm.json
+*.step
+*.stp
+*.stl
+*.iges
+*.igs
+*.3mf
+!examples/**
