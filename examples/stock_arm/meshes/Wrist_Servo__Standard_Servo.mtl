@@ -1,0 +1,8 @@
+# CAD Modeler robot export
+newmtl mat_2c2d30_2
+Kd 0.1725 0.1765 0.1882
+Ka 0 0 0
+Ks 0.2 0.2 0.2
+Ns 50
+d 1
+illum 2

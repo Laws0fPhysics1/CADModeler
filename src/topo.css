@@ -1,0 +1,4 @@
+/* SHAPE OPTIMIZATION dialog (topoui.js); builds on cfdstudy.css and fea.css */
+.topo-dlg { width: 350px; }
+.topo-prog .cfd-res { margin-top: 6px; }
+.topo-prog .cfd-bar i { background: #d9822b; }

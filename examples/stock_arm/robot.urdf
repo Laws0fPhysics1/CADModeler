@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- CAD Modeler robot export. SI units (m, kg, rad), Z up. Generated 2026-10-08T14:17:32.105Z -->
+<robot name="stock_arm">
+  <material name="mat_c9cdd2"><color rgba="0.7882 0.8039 0.8235 1"/></material>
+  <material name="mat_34373c_1"><color rgba="0.2039 0.2157 0.2353 1"/></material>
+  <material name="mat_2c2d30_2"><color rgba="0.1725 0.1765 0.1882 1"/></material>
+  <link name="Base_Plate">
+    <inertial>
+      <origin xyz="0 0 0.003175" rpy="0 0 0"/>
+      <mass value="0.438912"/>
+      <inertia ixx="0.0009378204" ixy="1.609325e-19" ixz="1.609325e-19" iyy="0.0009378204" iyz="1.609325e-19" izz="0.001872691"/>
+    </inertial>
+    <visual name="Base_Plate__1_4_Aluminum_Plate_160_160_mm">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Base_Plate__1_4_Aluminum_Plate_160_160_mm.obj"/></geometry>
+      <material name="mat_c9cdd2"/>
+    </visual>
+    <collision name="Base_Plate__1_4_Aluminum_Plate_160_160_mm_collision">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Base_Plate__1_4_Aluminum_Plate_160_160_mm.obj"/></geometry>
+    </collision>
+  </link>
+  <link name="Yaw_Motor">
+    <inertial>
+      <origin xyz="0 -6.935396e-7 0.02039105" rpy="0 0 0"/>
+      <mass value="0.1927071"/>
+      <inertia ixx="0.00005481448" ixy="1.005828e-20" ixz="0" iyy="0.00005481475" iyz="4.358186e-9" izz="0.00005492026"/>
+    </inertial>
+    <visual name="Yaw_Motor__NEMA_17_Stepper_40_mm">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Yaw_Motor__NEMA_17_Stepper_40_mm.obj"/></geometry>
+      <material name="mat_34373c_1"/>
+    </visual>
+    <collision name="Yaw_Motor__NEMA_17_Stepper_40_mm_collision">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Yaw_Motor__NEMA_17_Stepper_40_mm.obj"/></geometry>
+    </collision>
+  </link>
+  <link name="Upper_Arm">
+    <inertial>
+      <origin xyz="0 0 0.09" rpy="0 0 0"/>
+      <mass value="0.08684364"/>
+      <inertia ixx="0.0002380189" ixy="4.023314e-20" ixz="2.011657e-20" iyy="0.0002380189" iyz="2.011657e-20" izz="0.000007082249"/>
+    </inertial>
+    <visual name="Upper_Arm__2020_T_slot_180_mm">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Upper_Arm__2020_T_slot_180_mm.obj"/></geometry>
+      <material name="mat_c9cdd2"/>
+    </visual>
+    <collision name="Upper_Arm__2020_T_slot_180_mm_collision">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Upper_Arm__2020_T_slot_180_mm.obj"/></geometry>
+    </collision>
+  </link>
+  <link name="Forearm">
+    <inertial>
+      <origin xyz="0 0.055 0.01" rpy="0 0 0"/>
+      <mass value="0.06754505"/>
+      <inertia ixx="0.0001130778" ixy="1.005828e-20" ixz="2.011657e-20" iyy="0.000005508416" iyz="1.005828e-20" izz="0.0001130778"/>
+    </inertial>
+    <visual name="Forearm__2020_T_slot_140_mm">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Forearm__2020_T_slot_140_mm.obj"/></geometry>
+      <material name="mat_c9cdd2"/>
+    </visual>
+    <collision name="Forearm__2020_T_slot_140_mm_collision">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Forearm__2020_T_slot_140_mm.obj"/></geometry>
+    </collision>
+  </link>
+  <link name="Wrist_Servo">
+    <inertial>
+      <origin xyz="0.0001273327 0 0.01843518" rpy="0 0 0"/>
+      <mass value="0.03121664"/>
+      <inertia ixx="0.000004484708" ixy="9.778887e-22" ixz="-7.735588e-8" iyy="0.000007953683" iyz="0" izz="0.000005491031"/>
+    </inertial>
+    <visual name="Wrist_Servo__Standard_Servo">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Wrist_Servo__Standard_Servo.obj"/></geometry>
+      <material name="mat_2c2d30_2"/>
+    </visual>
+    <collision name="Wrist_Servo__Standard_Servo_collision">
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><mesh filename="meshes/Wrist_Servo__Standard_Servo.obj"/></geometry>
+    </collision>
+  </link>
+  <joint name="Motor_Mount" type="fixed">
+    <parent link="Base_Plate"/>
+    <child link="Yaw_Motor"/>
+    <origin xyz="0 0 0.00635" rpy="0 0 0"/>
+  </joint>
+  <joint name="Base_Yaw" type="continuous">
+    <parent link="Yaw_Motor"/>
+    <child link="Upper_Arm"/>
+    <origin xyz="0 0 0.048" rpy="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="100" velocity="6.283185"/>
+    <dynamics damping="10" friction="0"/>
+  </joint>
+  <joint name="Shoulder" type="revolute">
+    <parent link="Upper_Arm"/>
+    <child link="Forearm"/>
+    <origin xyz="0.01 0 0.165" rpy="1.570796 0 1.570796"/>
+    <axis xyz="0 0 1"/>
+    <limit lower="-2.094395" upper="2.094395" effort="100" velocity="6.283185"/>
+    <dynamics damping="10" friction="0"/>
+  </joint>
+  <joint name="Wrist_Mount" type="fixed">
+    <parent link="Forearm"/>
+    <child link="Wrist_Servo"/>
+    <origin xyz="0 0.125 0.01" rpy="-1.570796 -1.570796 0"/>
+  </joint>
+</robot>

@@ -1,0 +1,41 @@
+/* New Study gallery (studygallery.js) */
+.sg-scrim { position: fixed; inset: 0; z-index: 80; background: rgba(0, 0, 0, 0.25); display: flex; align-items: center; justify-content: center; }
+.sg-panel { width: min(900px, calc(100vw - 32px)); height: min(620px, calc(100vh - 48px)); display: flex; flex-direction: column; background: var(--menu-bg); color: var(--ink); border: 1px solid var(--toolbar-border); border-radius: 4px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3); }
+.sg-title { height: 38px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; font-weight: 600; font-size: 13px; border-bottom: 1px solid var(--sep); }
+.sg-tico { width: 20px; height: 20px; display: inline-block; }
+.sg-sp { flex: 1; }
+.sg-x { width: 26px; height: 26px; padding: 5px; border-radius: 3px; color: var(--ink-3); }
+.sg-x:hover { background: var(--hover); }
+.sg-main { flex: 1; display: flex; min-height: 0; }
+.sg-nav { width: 170px; flex: none; padding: 8px 0; border-right: 1px solid var(--sep); display: flex; flex-direction: column; }
+.sg-navbtn { display: flex; align-items: center; text-align: left; padding: 7px 14px; font-size: 12.5px; color: var(--ink-3); border-left: 2px solid transparent; }
+.sg-navbtn:hover { background: var(--hover); color: var(--ink); }
+.sg-navbtn.active { color: var(--ink); font-weight: 600; border-left-color: var(--blue); background: var(--active); }
+.sg-n { margin-left: auto; font-size: 10.5px; color: var(--ink-5); font-weight: 400; }
+.sg-grid { flex: 1; overflow: auto; padding: 4px 14px 14px; display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px; align-content: start; }
+.sg-cat { grid-column: 1 / -1; margin: 12px 0 0; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; color: var(--ink-5); text-transform: uppercase; }
+.sg-card { position: relative; display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 1px solid var(--sep); border-radius: 4px; cursor: pointer; }
+.sg-card:hover { background: var(--hover); }
+.sg-card:focus-visible { outline: 2px solid var(--blue); outline-offset: 1px; }
+.sg-card.picked { border-color: var(--blue); box-shadow: inset 0 0 0 1px var(--blue); background: var(--active); }
+.sg-card.soon .sg-ico, .sg-card.soon .sg-nm { opacity: 0.6; }
+.sg-card .uc-tag { position: absolute; right: 8px; bottom: 8px; margin: 0; }
+.sg-card.soon { padding-bottom: 26px; }
+.sg-ico { flex: none; width: 36px; height: 36px; display: inline-block; }
+.sg-tx { min-width: 0; }
+.sg-nm { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.sg-ds { font-size: 11.5px; color: var(--ink-5); line-height: 1.4; margin-top: 3px; }
+.sg-new { font-size: 8.5px; font-weight: 800; letter-spacing: 0.5px; color: #fff; background: var(--blue); border-radius: 2px; padding: 1px 5px; }
+.sg-foot { height: 48px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-top: 1px solid var(--sep); font-size: 12px; }
+.sg-foot .btn:disabled { opacity: 0.45; cursor: default; }
+.sg-detail { color: var(--ink-3); }
+
+/* Study Settings panel for placeholder studies (studyoptions.js); sits where feature dialogs do */
+.ss-panel { top: 140px; right: 14px; width: 320px; font-size: 12px; display: flex; flex-direction: column; max-height: calc(100% - 154px); z-index: 6; }
+.ss-panel .dlg-body { overflow-y: auto; min-height: 0; }
+.ss-panel .dlg-row label { width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ss-panel .num input { width: 100%; }
+.ss-sec { margin: 10px 0 2px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; color: var(--ink-5); text-transform: uppercase; }
+.ss-uc { display: flex; flex-direction: column; gap: 4px; padding: 2px 0 4px; color: var(--ink-5); font-size: 11px; }
+.ss-uc .uc-tag { align-self: flex-start; margin-left: 0; }
+.ss-check .ctl { justify-content: flex-end; }

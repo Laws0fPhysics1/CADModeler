@@ -1,0 +1,74 @@
+/* Appearance / Physical Material dialog. Uses the theme variables from style.css. */
+.appr-dlg { top: 140px; right: 14px; width: 318px; max-height: calc(100% - 160px); display: flex; flex-direction: column; font-size: 12px; color: var(--ink); z-index: 6; user-select: none; }
+.appr-dlg .dlg-head .ic { width: 20px; height: 20px; display: inline-block; flex: none; }
+.appr-dlg .dlg-foot button:disabled { opacity: 0.5; cursor: default; }
+.appr-body { flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden; padding: 6px 10px 6px; }
+
+.appr-sec { padding: 4px 0 8px; border-bottom: 1px solid var(--sep-3); }
+.appr-sec:last-child { border-bottom: 0; }
+.appr-h { display: flex; align-items: center; gap: 6px; height: 24px; font-weight: 700; font-size: 11px; letter-spacing: 0.4px; color: var(--ink-3); }
+.appr-h .appr-count, .appr-h .appr-colname { font-weight: 400; color: var(--ink-6); letter-spacing: 0; }
+.appr-h .appr-colname { margin-left: auto; }
+.appr-link { margin-left: auto; color: var(--blue); font-weight: 400; letter-spacing: 0; padding: 1px 4px; border-radius: 2px; }
+.appr-link:hover { background: var(--hover); }
+.appr-empty { color: var(--ink-6); padding: 6px 4px; font-style: italic; }
+
+/* apply to */
+.appr-bodies { max-height: 92px; overflow-y: auto; border: 1px solid var(--input-border); border-radius: 2px; background: var(--input-bg); padding: 2px 0; }
+.appr-row { display: flex; align-items: center; gap: 6px; height: 22px; padding: 0 6px; cursor: pointer; white-space: nowrap; }
+.appr-row:hover { background: var(--hover); }
+.appr-row input { accent-color: var(--blue); margin: 0; flex: none; }
+.appr-row .nm { flex: none; max-width: 120px; overflow: hidden; text-overflow: ellipsis; }
+.appr-row em { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-style: normal; color: var(--ink-6); font-size: 11px; text-align: right; }
+
+/* current appearance */
+.appr-cur { display: flex; align-items: center; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--sep-3); }
+.appr-curtxt { min-width: 0; }
+.appr-curname { font-weight: 600; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.appr-cursub { color: var(--ink-6); font-size: 11px; margin-top: 2px; }
+
+/* sphere swatches */
+.appr-sw { width: 20px; height: 20px; border-radius: 50%; flex: none; display: inline-block; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
+.appr-sw.big { width: 44px; height: 44px; box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(0, 0, 0, 0.12); }
+
+/* material library */
+.appr-search { width: 100%; height: 24px; font: inherit; border: 1px solid var(--input-border); border-radius: 2px; background: var(--input-bg); color: var(--input-ink); padding: 0 6px; margin-bottom: 4px; outline: none; user-select: text; }
+.appr-search:focus { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+.appr-list { height: 210px; overflow-y: auto; border: 1px solid var(--input-border); border-radius: 2px; background: var(--input-bg); }
+.appr-cat { position: sticky; top: 0; z-index: 1; height: 20px; line-height: 20px; padding: 0 8px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink-6); background: var(--panel-solid); border-bottom: 1px solid var(--sep-3); }
+.appr-mat { display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; cursor: pointer; outline: none; }
+.appr-mat:hover { background: var(--hover); }
+.appr-mat.on { background: var(--active); box-shadow: inset 2px 0 0 var(--blue); }
+.appr-mat .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* colours */
+.appr-colrow { display: flex; align-items: flex-start; gap: 8px; }
+.appr-colors { flex: 1; display: grid; grid-template-columns: repeat(9, 22px); gap: 4px; }
+.appr-col { width: 22px; height: 22px; border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.18); position: relative; }
+.appr-col:hover { transform: scale(1.12); }
+.appr-col.on { box-shadow: 0 0 0 2px var(--panel-solid), 0 0 0 4px var(--blue); }
+.appr-col.def { border-radius: 50%; }
+.appr-col.def::after { content: ""; position: absolute; left: 3px; right: 3px; top: 50%; height: 1.5px; background: rgba(255, 255, 255, 0.85); transform: rotate(-45deg); box-shadow: 0 0 1px rgba(0, 0, 0, 0.6); }
+.appr-customwrap { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 10.5px; color: var(--ink-5); cursor: pointer; }
+.appr-custom { width: 30px; height: 26px; padding: 0; border: 1px solid var(--input-border); border-radius: 3px; background: var(--input-bg); cursor: pointer; }
+.appr-custom.on { border-color: var(--blue); box-shadow: 0 0 0 1px var(--blue); }
+.appr-custom::-webkit-color-swatch-wrapper { padding: 2px; }
+.appr-custom::-webkit-color-swatch { border: 0; border-radius: 2px; }
+
+/* finish */
+.appr-seg { display: flex; border: 1px solid var(--btn-border); border-radius: 2px; overflow: hidden; }
+.appr-segbtn { flex: 1; height: 24px; background: var(--btn-bg); border-right: 1px solid var(--btn-border); }
+.appr-segbtn:last-child { border-right: 0; }
+.appr-segbtn:hover { background: var(--btn-hover); }
+.appr-segbtn.on { background: var(--blue); color: #fff; }
+
+/* physical properties */
+.appr-phys summary { height: 24px; line-height: 24px; font-weight: 700; font-size: 11px; letter-spacing: 0.4px; color: var(--ink-3); cursor: pointer; outline: none; }
+.appr-phys summary em { font-style: normal; font-weight: 400; letter-spacing: 0; color: var(--ink-6); margin-left: 4px; padding: 0 5px; border: 1px solid var(--line); border-radius: 8px; font-size: 10.5px; }
+.appr-props { display: grid; grid-template-columns: 1fr; border: 1px solid var(--line); border-radius: 2px; }
+.appr-prop { display: flex; justify-content: space-between; gap: 8px; padding: 3px 8px; border-bottom: 1px solid var(--sep-3); }
+.appr-prop:nth-child(even) { background: var(--hover); background: color-mix(in srgb, var(--hover) 45%, transparent); }
+.appr-prop:last-child { border-bottom: 0; }
+.appr-prop span { color: var(--ink-4); }
+.appr-prop b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.appr-note { color: var(--ink-6); font-size: 10.5px; line-height: 1.45; padding: 5px 2px 0; user-select: text; }

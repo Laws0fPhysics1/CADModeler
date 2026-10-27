@@ -1,0 +1,51 @@
+// Display units: node tests/units.test.mjs
+import { parseLength, parseNumber, fmtLen, toDisp, fromDisp, setUnitSource, units, exprNames } from "../src/units.js";
+import * as SM from "../src/sketchmodel.js";
+let fails = 0;
+const near = (a, b) => Math.abs(a - b) < 1e-9 || (Number.isNaN(a) && Number.isNaN(b));
+const check = (name, got, want) => { const ok = near(got, want); console.log(ok ? "ok  " : "FAIL", name, got); if (!ok) fails++; };
+check("bare mm", parseLength("12.5", "mm"), 12.5);
+check("bare in", parseLength("2", "in"), 50.8);
+check("suffix overrides", parseLength("25.4mm", "in"), 25.4);
+check("inch mark", parseLength('1"', "mm"), 25.4);
+check("feet", parseLength("1ft", "mm"), 304.8);
+check("metres", parseLength("0.5 m", "mm"), 500);
+check("cm", parseLength("3cm", "mm"), 30);
+check("mixed sum", parseLength("1in + 3mm", "mm"), 28.4);
+check("division", parseLength("100/4", "mm"), 25);
+check("product in inches", parseLength("2*3", "in"), 152.4);
+check("brackets / unary minus", parseLength("-(1+1)*2", "mm"), -4);
+check("comma decimal", parseLength("1,5", "mm"), 1.5);
+check("garbage", parseLength("abc", "mm"), NaN);
+check("half expression", parseLength("3+", "mm"), NaN);
+check("empty", parseLength("", "mm"), NaN);
+check("parseNumber", parseNumber("90/4"), 22.5);
+check("toDisp", toDisp(25.4, "in"), 1);
+check("fromDisp", fromDisp(2, "cm"), 20);
+check("fmtLen in", +fmtLen(10, undefined, "in"), 0.3937);
+// expressions (feature request 2026-10-20): functions, powers, constants, names
+check("sqrt", parseLength("sqrt(2)*10", "mm"), Math.SQRT2 * 10);
+check("cos in degrees", parseLength("cos(60)*10", "mm"), 5);
+check("power", parseLength("2^3", "mm"), 8);
+check("pi", parseLength("pi", "mm"), Math.PI);
+check("max with comma", parseLength("max(3,4)", "mm"), 4);
+check("atan2", parseNumber("atan2(1,1)"), 45);
+check("name / 2", parseLength("d1 / 2", "mm", { d1: 20 }), 10);
+check("name in inches", parseLength("d1 / 2", "in", { d1: 25.4 }), 12.7);
+check("unknown name", parseLength("d9", "mm", { d1: 1 }), NaN);
+check("exprNames", exprNames("d1/2 + sqrt(d2) * pi + 3mm").join() === "d1,d2" ? 1 : 0, 1);
+{
+  const m = { points: {}, entities: [], constraints: [{ id: "a", type: "dim", value: 10 }, { id: "b", type: "dim", value: 1 }, { id: "c", type: "dim", value: 1 }] };
+  SM.ensureDimNames(m);
+  check("names", m.constraints.map((c) => c.name).join() === "d1,d2,d3" ? 1 : 0, 1);
+  Object.assign(m.constraints[1], { expr: "d3 * 2", deps: ["d3"] });
+  Object.assign(m.constraints[2], { expr: "d1 + 1", deps: ["d1"] });
+  SM.applyDimExprs(m, (c, vars) => parseLength(c.expr, "mm", vars));
+  check("chained exprs", m.constraints[1].value, 22);
+  check("loop detected", SM.dimExprLoop(m, "a", ["d2"]) ? 1 : 0, 1);
+  check("no loop", SM.dimExprLoop(m, "a", []) ? 1 : 0, 0);
+}
+setUnitSource(() => "ft"); check("source", units() === "ft" ? 1 : 0, 1);
+setUnitSource(() => "bogus"); check("bad unit falls back to mm", units() === "mm" ? 1 : 0, 1);
+console.log("units", fails ? fails + " FAILED" : "ok");
+if (fails) process.exitCode = 1;

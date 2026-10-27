@@ -1,0 +1,29 @@
+/* 2D FLOW panel (cfd2dui.js). Builds on .panel / .dlg-* / .btn and cfdstudy.css. */
+.f2-dlg { left: 50%; top: 12px; transform: translateX(-50%); width: min(1040px, calc(100% - 40px)); height: min(600px, calc(100% - 30px)); display: flex; flex-direction: column; font-size: 12px; color: var(--ink); z-index: 22; resize: both; overflow: hidden; min-width: 640px; min-height: 380px; }
+.f2-dlg[style*="left"] { transform: none; }
+.f2-dlg.cfd-flash { box-shadow: 0 0 0 2px var(--blue), 0 2px 8px var(--panel-shadow); }
+.f2-dlg .dlg-head .x svg { width: 14px; height: 14px; display: block; }
+.f2-main { flex: 1; display: flex; min-height: 0; }
+.f2-side { width: 320px; flex: none; overflow-y: auto; overflow-x: hidden; padding: 8px 10px; border-right: 1px solid var(--sep); }
+.f2-side .dlg-row input[type="range"] { width: 100%; }
+.f2-re { margin: 4px 0 2px; line-height: 1.45; }
+.f2-out { min-height: 54px; }
+.f2-panel { display: flex; gap: 8px; align-items: baseline; margin: 2px 0 6px; padding: 3px 6px; border-left: 3px solid var(--blue); background: var(--sel-active-bg); }
+.f2-panel b { margin-left: auto; }
+.f2-plot { width: 100%; height: 92px; display: block; border: 1px solid var(--sep-2); border-radius: 2px; background: var(--input-bg); }
+.f2-stage { flex: 1; position: relative; min-width: 0; background: #1e2024; }
+.f2-gl, .f2-ov { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.f2-ov { cursor: grab; }
+.f2-ov:active { cursor: grabbing; }
+.f2-legend { position: absolute; right: 10px; top: 10px; bottom: 34px; width: 64px; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; pointer-events: none; color: #fff; text-shadow: 0 1px 2px #000; font-size: 11px; }
+.f2-lbar { flex: 1; width: 12px; border: 1px solid rgba(255, 255, 255, 0.6); border-radius: 2px; }
+.f2-probe { position: absolute; right: 10px; bottom: 8px; color: #fff; text-shadow: 0 1px 2px #000; font-size: 11px; pointer-events: none; }
+.f2-banner { position: absolute; left: 50%; top: 40%; transform: translate(-50%, -50%); max-width: 70%; padding: 10px 14px; background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-ink); border-radius: 3px; text-align: center; }
+.f2-hint { color: var(--ink-6); font-size: 11px; }
+.f2-dlg .dlg-foot .btn { min-width: 64px; }
+
+/* NACA airfoil dialog preview (main.js startAirfoil) */
+:root { --af-fill: rgba(28, 138, 209, 0.18); --af-line: #1c8ad1; }
+.af-preview { margin: 6px 0 2px; border: 1px solid var(--sep-2); border-radius: 2px; background: var(--input-bg); }
+.af-preview svg { display: block; }
+.af-plane { color: var(--ink-3); }

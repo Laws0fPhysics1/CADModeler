@@ -1,0 +1,50 @@
+/* Hero loading screen (hero.js). Always dark, whatever the app theme. */
+#loading.hero { background: #0b1119; color: #cfe0f5; display: block; transition: opacity 0.45s ease; }
+#loading.hero.done { opacity: 0; pointer-events: none; }
+.hero-canvas { position: absolute; inset: 0; display: block; }
+.hero-over { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 9vh 16px 7vh; }
+.hero-title { text-align: center; }
+.hero-name { font-size: clamp(26px, 4vw, 44px); font-weight: 300; letter-spacing: 0.06em; color: #eef5ff; }
+.hero-tag { margin-top: 6px; font-size: 12px; font-weight: 600; letter-spacing: 0.32em; text-transform: uppercase; color: #7fa6d0; }
+.hero-status { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.hero-bar { width: 220px; height: 2px; background: rgba(127, 166, 208, 0.2); overflow: hidden; border-radius: 1px; }
+.hero-bar i { display: block; width: 35%; height: 100%; background: #58a6ff; animation: hero-bar 1.3s ease-in-out infinite; }
+.hero-msg { font-size: 12px; color: #8fa9c7; letter-spacing: 0.04em; }
+@keyframes hero-bar { 0% { transform: translateX(-100%); } 100% { transform: translateX(290%); } }
+@media (prefers-reduced-motion: reduce) { .hero-bar i { animation: none; width: 100%; opacity: 0.6; } }
+
+/* start page launcher (under the wing) */
+#loading.hero.closed { display: none; }
+.hero-over { justify-content: flex-start; padding: 7vh 16px 4vh; }
+.hero-launch { margin-top: auto; pointer-events: auto; display: flex; flex-direction: column; align-items: center; gap: 12px; width: min(980px, 100%); }
+.hero-launch:not(.loading) .hero-status { display: none; }
+.hl-panel { width: 100%; padding: 14px 16px 12px; border-radius: 8px; background: rgba(14, 22, 32, 0.78); border: 1px solid rgba(127, 166, 208, 0.18); backdrop-filter: blur(6px); box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35); display: flex; flex-direction: column; gap: 12px; transition: opacity 0.3s; }
+.hero-launch.loading .hl-panel { opacity: 0.45; pointer-events: none; }
+.hl-continue { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 14px; border-radius: 6px; background: #1f6fd1; color: #fff; font-size: 14px; text-align: left; }
+.hl-continue:hover { background: #2a7ee6; }
+.hl-continue:focus-visible, .hl-tile:focus-visible, .hl-chip:focus-visible { outline: 2px solid #9fd0ff; outline-offset: 2px; }
+.hl-ck { font-weight: 300; opacity: 0.85; }
+.hl-cname { font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hl-arrow { font-size: 16px; }
+.hl-cols { display: grid; grid-template-columns: 2fr 2fr 4fr; gap: 14px; }
+.hl-hd { font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #7fa6d0; margin-bottom: 6px; }
+.hl-tiles { display: flex; gap: 6px; }
+.hl-tile { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 9px 6px 8px; text-align: center !important; border-radius: 6px; background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(127, 166, 208, 0.16); color: #dce8f6; text-align: left; }
+.hl-tile:hover { background: rgba(88, 166, 255, 0.14); border-color: rgba(88, 166, 255, 0.5); }
+.hl-tile i { width: 30px; height: 30px; display: block; margin-bottom: 3px; }
+.hl-tile svg { width: 100%; height: 100%; }
+.hl-tn { max-width: 100%; font-size: 12.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hl-ts { max-width: 100%; font-size: 10.5px; color: #8fa9c7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hl-tile.uc { position: relative; overflow: hidden; }
+.hl-tile.uc i, .hl-tile.uc .hl-tn { opacity: 0.6; }
+.hl-foot { display: flex; align-items: center; gap: 12px; }
+.hl-recent { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; }
+.hl-recent .hl-hd { margin: 0; }
+.hl-chips { display: flex; gap: 6px; overflow: hidden; }
+.hl-chip { display: flex; align-items: center; gap: 6px; max-width: 180px; padding: 4px 9px 4px 5px; border-radius: 12px; background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(127, 166, 208, 0.16); color: #cfe0f5; font-size: 11.5px; }
+.hl-chip:hover { border-color: rgba(88, 166, 255, 0.5); }
+.hl-chip.active { border-color: rgba(88, 166, 255, 0.6); }
+.hl-chip i { width: 16px; height: 16px; display: block; flex: none; }
+.hl-chip span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hl-show { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8fa9c7; white-space: nowrap; cursor: pointer; }
+@media (max-width: 760px) { .hl-cols { grid-template-columns: 1fr; } }

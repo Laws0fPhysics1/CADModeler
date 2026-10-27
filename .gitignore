@@ -1,0 +1,51 @@
+# Dependencies and build output (recreated by npm ci / the launcher)
+node_modules/
+dist/
+release/
+
+# Personal data: bug reports, feature requests, saved parts library.
+# The app recreates these folders on demand (electron/parts-store.cjs, bugreport-writer.cjs).
+bug-reports/
+feature-requests/
+Parts/
+CAD Modeler Parts/
+
+# Scratch screenshots (the curated set lives in docs/feature-tour/)
+screenshots/
+
+# CFD / FEA case output if an exchange folder is ever pointed inside the project
+CAD-CFD Exchange/
+CAD-FEA Exchange/
+cfd-run.log
+fea-run.log
+
+# Logs and temp files
+*.log
+npm-debug.log*
+*.tmp
+*.temp
+*.bak
+*.swp
+tmp/
+temp/
+
+# Vite / tool caches
+.vite/
+node_modules/.vite/
+.cache/
+.eslintcache
+coverage/
+
+# Local env and editor/agent settings
+.env
+.env.*
+.vscode/
+.idea/
+.claude/settings.local.json
+
+# OS junk
+Thumbs.db
+ehthumbs.db
+desktop.ini
+$RECYCLE.BIN/
+.DS_Store

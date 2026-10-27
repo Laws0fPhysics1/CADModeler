@@ -1,0 +1,186 @@
+[
+ {
+  "id": "sketch",
+  "title": "Constrained sketching",
+  "blurb": "Sketches on planes or faces with lines, rectangles, circles, arcs and polygons, driven by a constraint solver. Sketch Dimension (D) infers lengths, distances, angles, diameters and radii; constraint glyphs are selectable, fully constrained geometry turns black, and the Sketch Palette shows the remaining degrees of freedom.",
+  "file": "01-sketch.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "extrude",
+  "title": "Extrude with live preview",
+  "blurb": "Extrude, Revolve and Press Pull pick sketch profiles or planar faces. One side, symmetric or two sides; Join, Cut, Intersect or New Body. The preview updates live, with a drag arrow and an in-canvas value box.",
+  "file": "02-extrude.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "fillet",
+  "title": "Fillet, chamfer and shell",
+  "blurb": "Fillet, Chamfer and Shell work on the real B-rep (OpenCascade), with live previews. Every feature lands on the parametric timeline: double-click to edit, drag the marker to roll back, and failed features turn red with the reason.",
+  "file": "03-fillet.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "fasteners",
+  "title": "ISO fasteners with modeled threads",
+  "blurb": "M2–M24 and UNC bolts, cap screws, button and countersunk heads, set screws, threaded rod, nuts and washers. Click a hole rim and the part seats in it, sized automatically; threads are real helical geometry or cosmetic.",
+  "file": "04-fasteners.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "appearance",
+  "title": "Materials and appearance",
+  "blurb": "21 engineering materials with render settings and real physical properties (density, Young's modulus, yield strength, thermal data) used by the simulations. Any colour on any material with a polished, satin or matte finish; studio lighting, ground shadow and ambient occlusion.",
+  "file": "05-appearance.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "measure",
+  "title": "Measure",
+  "blurb": "INSPECT → Measure (I): face areas, edge lengths and the minimum distance between any two faces or edges.",
+  "file": "06-measure.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "search",
+  "title": "Command search and shortcuts",
+  "blurb": "Press S anywhere to search every command by name; single-key shortcuts (E extrude, Q press pull, F fillet, J joint, K shop stock, G gears…) work as in Fusion.",
+  "file": "07-search.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "marking-menu",
+  "title": "Right-click marking menu",
+  "blurb": "Right-click in the canvas for Fusion's radial marking menu: repeat the last command, press pull, sketch, extrude, fillet, undo / redo, plus an overflow menu.",
+  "file": "08-marking-menu.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "export",
+  "title": "Import and export",
+  "blurb": "Import STEP, STL and OBJ (meshes become real solids) by menu or drag-and-drop. Export STEP, STL, OBJ, GLB (with materials) or the design file.",
+  "file": "09-export.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "stock",
+  "title": "Shop Stock library",
+  "blurb": "About 440 things you buy rather than design: T-slot extrusion, pipe, tube, angle and channel, bar and plate, bearings, shafts, steppers and servos, and all the fasteners. Search, pick a size and length, place it on a face or in a hole; it arrives with the right material.",
+  "file": "10-stock.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "gear-wizard",
+  "title": "Gear Wizard",
+  "blurb": "Involute spur, helical, internal ring and rack gears: pairs, trains, ring + pinion, rack + pinion, planetary sets, or a new gear meshed onto one already in the design. Teeth are phased so meshing gears never overlap; the panel shows diameters, centre distances, contact ratio, ratio and output speed.",
+  "file": "11-gear-wizard.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "gears-drive",
+  "title": "Gears that move: joints and motion links",
+  "blurb": "With “Make it move”, each gear gets a component and an axle joint on a Gear Frame, and meshing gears are tied by motion links. Drive Joints turns the sun and the planets, carrier and ring follow; links show up in the browser and export to URDF as mimic joints.",
+  "file": "12-gears-drive.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "motion-link",
+  "title": "Motion Link",
+  "blurb": "ASSEMBLE → Motion Link ties any two moving joints by tooth counts or a ratio, including rotation driving a slider (rack and pinion). Links chain into trains and are checked for loops.",
+  "file": "13-motion-link.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "robot-export",
+  "title": "Robot export for Isaac Sim / Isaac Lab",
+  "blurb": "Turns the assembly into a robot package: robot.usda (UsdPhysics articulation) and robot.urdf with meshes, mass and inertia from the exact geometry and materials, drives, limits and gear mimic joints.",
+  "file": "14-robot-export.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "chains-belts",
+  "title": "Sprockets, roller chain, pulleys and timing belts",
+  "blurb": "Chain drive and belt drive modes in the Gear Wizard: ANSI / ISO / bicycle roller chain on real sprocket tooth forms, GT2 / HTD timing belts on grooved pulleys. The centre distance is solved so the chain is a whole number of links (or the belt whole teeth); chaining onto a wheel that already carries a chain adds a twin sprocket on its shaft. Driving a sprocket carries the chain and belt round with it.",
+  "file": "15-chains-belts.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "airfoil",
+  "title": "NACA airfoil sketches",
+  "blurb": "CREATE → NACA Airfoil: 4- and 5-digit sections from a code, chord and angle of attack, as a sketch on any plane or added to the open sketch, with a live preview and the section's thickness and camber.",
+  "file": "16-airfoil.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "flow2d",
+  "title": "2D Flow (GPU lattice Boltzmann)",
+  "blurb": "A quick 2D CFD of any closed sketch on the GPU: speed, vorticity or pressure with streamlines, live lift and drag coefficients and forces per metre of span, and an inviscid panel-method lift alongside.",
+  "file": "17-flow2d.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "cfd",
+  "title": "3D CFD inside the app",
+  "blurb": "SIMULATE → CFD Study runs the GPU CFD Sim solver in the background and draws the results in the viewport: surface pressure, vortex surfaces, streamlines, slices, legends and a frame player, with drag, lift and side force.",
+  "file": "18-cfd.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "fea",
+  "title": "Static stress (FEA) inside the app",
+  "blurb": "SIMULATE → Static Stress: pick fixed faces and load faces, forces or pressure and gravity; FEA Sim meshes the exact geometry into quadratic tetrahedra and solves on the GPU. Results: deformed shape, safety factor, von Mises, displacement and principal stresses with min / max probes.",
+  "file": "19-fea.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "topo",
+  "title": "Shape Optimization (generative design)",
+  "blurb": "Pick the faces that hold a part and the faces that carry loads, then ask for the lightest part that meets a safety factor (or a target mass). The body is voxelised and material is shaved away live over a ghost of the original; Create Body puts the result in the timeline.",
+  "file": "20-topo.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "under-construction",
+  "title": "Under-construction tape",
+  "blurb": "Every control that's there for the Fusion look but isn't built yet carries black-and-yellow tape: toolbar icons, menu items, the other tabs, and the Data Panel, notifications, comments and viewports buttons.",
+  "file": "21-under-construction.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "bug-report",
+  "title": "Bug reports",
+  "blurb": "The Bug report button saves your memo with the last five minutes of clicks and keys, a screenshot, the design and the app state into bug-reports/, ready for the next session to pick up.",
+  "file": "22-bug-report.jpg",
+  "error": null,
+  "consoleErrors": []
+ },
+ {
+  "id": "dark-theme",
+  "title": "Dark theme",
+  "blurb": "Light and dark themes (avatar menu or Display Settings), perspective / orthographic / perspective-with-ortho-faces cameras, ViewCube, and shaded / shaded-with-edges / wireframe styles.",
+  "file": "23-dark-theme.jpg",
+  "error": null,
+  "consoleErrors": []
+ }
+]

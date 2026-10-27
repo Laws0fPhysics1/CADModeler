@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAD Modeler features</title>
+<style>
+:root { --bg: #f4f5f7; --card: #fff; --ink: #1d2733; --muted: #5b6673; --line: #dde1e6; --accent: #0696d7; }
+@media (prefers-color-scheme: dark) { :root { --bg: #17191c; --card: #212429; --ink: #e8ebef; --muted: #9aa4af; --line: #31353b; --accent: #38b2ec; } }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.55 "Segoe UI", system-ui, sans-serif; }
+header { max-width: 1180px; margin: 0 auto; padding: 36px 16px 12px; }
+h1 { margin: 0 0 6px; font-size: 28px; }
+header p { margin: 0; color: var(--muted); max-width: 70ch; }
+nav { max-width: 1180px; margin: 0 auto; padding: 10px 16px 0; display: flex; flex-wrap: wrap; gap: 6px; }
+nav a { font-size: 13px; color: var(--accent); text-decoration: none; border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; background: var(--card); }
+main { max-width: 1180px; margin: 0 auto; padding: 16px; display: grid; gap: 22px; }
+article { background: var(--card); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+article img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--line); cursor: zoom-in; }
+article div { padding: 14px 18px 16px; }
+h2 { margin: 0 0 4px; font-size: 19px; }
+h2 span { color: var(--muted); font-weight: 400; font-size: 14px; margin-right: 8px; }
+article p { margin: 0; color: var(--muted); }
+</style></head><body>
+<header><h1>CAD Modeler: feature tour</h1><p>A Fusion 360-style parametric modeler (Electron, three.js, OpenCascade) with in-app CFD and FEA, generative design and a gear wizard. Every screenshot below was captured from the running app by <code>tools/feature-tour.cjs</code>.</p></header>
+<nav><a href="#sketch">1. Constrained sketching</a><a href="#extrude">2. Extrude with live preview</a><a href="#fillet">3. Fillet, chamfer and shell</a><a href="#fasteners">4. ISO fasteners with modeled threads</a><a href="#appearance">5. Materials and appearance</a><a href="#measure">6. Measure</a><a href="#search">7. Command search and shortcuts</a><a href="#marking-menu">8. Right-click marking menu</a><a href="#export">9. Import and export</a><a href="#stock">10. Shop Stock library</a><a href="#gear-wizard">11. Gear Wizard</a><a href="#gears-drive">12. Gears that move: joints and motion links</a><a href="#motion-link">13. Motion Link</a><a href="#robot-export">14. Robot export for Isaac Sim / Isaac Lab</a><a href="#chains-belts">15. Sprockets, roller chain, pulleys and timing belts</a><a href="#airfoil">16. NACA airfoil sketches</a><a href="#flow2d">17. 2D Flow (GPU lattice Boltzmann)</a><a href="#cfd">18. 3D CFD inside the app</a><a href="#fea">19. Static stress (FEA) inside the app</a><a href="#topo">20. Shape Optimization (generative design)</a><a href="#under-construction">21. Under-construction tape</a><a href="#bug-report">22. Bug reports</a><a href="#dark-theme">23. Dark theme</a></nav>
+<main>
+<article id="sketch"><a href="01-sketch.jpg"><img src="01-sketch.jpg" alt="Constrained sketching" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>1</span>Constrained sketching</h2><p>Sketches on planes or faces with lines, rectangles, circles, arcs and polygons, driven by a constraint solver. Sketch Dimension (D) infers lengths, distances, angles, diameters and radii; constraint glyphs are selectable, fully constrained geometry turns black, and the Sketch Palette shows the remaining degrees of freedom.</p></div></article>
+<article id="extrude"><a href="02-extrude.jpg"><img src="02-extrude.jpg" alt="Extrude with live preview" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>2</span>Extrude with live preview</h2><p>Extrude, Revolve and Press Pull pick sketch profiles or planar faces. One side, symmetric or two sides; Join, Cut, Intersect or New Body. The preview updates live, with a drag arrow and an in-canvas value box.</p></div></article>
+<article id="fillet"><a href="03-fillet.jpg"><img src="03-fillet.jpg" alt="Fillet, chamfer and shell" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>3</span>Fillet, chamfer and shell</h2><p>Fillet, Chamfer and Shell work on the real B-rep (OpenCascade), with live previews. Every feature lands on the parametric timeline: double-click to edit, drag the marker to roll back, and failed features turn red with the reason.</p></div></article>
+<article id="fasteners"><a href="04-fasteners.jpg"><img src="04-fasteners.jpg" alt="ISO fasteners with modeled threads" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>4</span>ISO fasteners with modeled threads</h2><p>M2–M24 and UNC bolts, cap screws, button and countersunk heads, set screws, threaded rod, nuts and washers. Click a hole rim and the part seats in it, sized automatically; threads are real helical geometry or cosmetic.</p></div></article>
+<article id="appearance"><a href="05-appearance.jpg"><img src="05-appearance.jpg" alt="Materials and appearance" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>5</span>Materials and appearance</h2><p>21 engineering materials with render settings and real physical properties (density, Young's modulus, yield strength, thermal data) used by the simulations. Any colour on any material with a polished, satin or matte finish; studio lighting, ground shadow and ambient occlusion.</p></div></article>
+<article id="measure"><a href="06-measure.jpg"><img src="06-measure.jpg" alt="Measure" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>6</span>Measure</h2><p>INSPECT → Measure (I): face areas, edge lengths and the minimum distance between any two faces or edges.</p></div></article>
+<article id="search"><a href="07-search.jpg"><img src="07-search.jpg" alt="Command search and shortcuts" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>7</span>Command search and shortcuts</h2><p>Press S anywhere to search every command by name; single-key shortcuts (E extrude, Q press pull, F fillet, J joint, K shop stock, G gears…) work as in Fusion.</p></div></article>
+<article id="marking-menu"><a href="08-marking-menu.jpg"><img src="08-marking-menu.jpg" alt="Right-click marking menu" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>8</span>Right-click marking menu</h2><p>Right-click in the canvas for Fusion's radial marking menu: repeat the last command, press pull, sketch, extrude, fillet, undo / redo, plus an overflow menu.</p></div></article>
+<article id="export"><a href="09-export.jpg"><img src="09-export.jpg" alt="Import and export" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>9</span>Import and export</h2><p>Import STEP, STL and OBJ (meshes become real solids) by menu or drag-and-drop. Export STEP, STL, OBJ, GLB (with materials) or the design file.</p></div></article>
+<article id="stock"><a href="10-stock.jpg"><img src="10-stock.jpg" alt="Shop Stock library" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>10</span>Shop Stock library</h2><p>About 440 things you buy rather than design: T-slot extrusion, pipe, tube, angle and channel, bar and plate, bearings, shafts, steppers and servos, and all the fasteners. Search, pick a size and length, place it on a face or in a hole; it arrives with the right material.</p></div></article>
+<article id="gear-wizard"><a href="11-gear-wizard.jpg"><img src="11-gear-wizard.jpg" alt="Gear Wizard" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>11</span>Gear Wizard</h2><p>Involute spur, helical, internal ring and rack gears: pairs, trains, ring + pinion, rack + pinion, planetary sets, or a new gear meshed onto one already in the design. Teeth are phased so meshing gears never overlap; the panel shows diameters, centre distances, contact ratio, ratio and output speed.</p></div></article>
+<article id="gears-drive"><a href="12-gears-drive.jpg"><img src="12-gears-drive.jpg" alt="Gears that move: joints and motion links" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>12</span>Gears that move: joints and motion links</h2><p>With “Make it move”, each gear gets a component and an axle joint on a Gear Frame, and meshing gears are tied by motion links. Drive Joints turns the sun and the planets, carrier and ring follow; links show up in the browser and export to URDF as mimic joints.</p></div></article>
+<article id="motion-link"><a href="13-motion-link.jpg"><img src="13-motion-link.jpg" alt="Motion Link" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>13</span>Motion Link</h2><p>ASSEMBLE → Motion Link ties any two moving joints by tooth counts or a ratio, including rotation driving a slider (rack and pinion). Links chain into trains and are checked for loops.</p></div></article>
+<article id="robot-export"><a href="14-robot-export.jpg"><img src="14-robot-export.jpg" alt="Robot export for Isaac Sim / Isaac Lab" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>14</span>Robot export for Isaac Sim / Isaac Lab</h2><p>Turns the assembly into a robot package: robot.usda (UsdPhysics articulation) and robot.urdf with meshes, mass and inertia from the exact geometry and materials, drives, limits and gear mimic joints.</p></div></article>
+<article id="chains-belts"><a href="15-chains-belts.jpg"><img src="15-chains-belts.jpg" alt="Sprockets, roller chain, pulleys and timing belts" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>15</span>Sprockets, roller chain, pulleys and timing belts</h2><p>Chain drive and belt drive modes in the Gear Wizard: ANSI / ISO / bicycle roller chain on real sprocket tooth forms, GT2 / HTD timing belts on grooved pulleys. The centre distance is solved so the chain is a whole number of links (or the belt whole teeth); chaining onto a wheel that already carries a chain adds a twin sprocket on its shaft. Driving a sprocket carries the chain and belt round with it.</p></div></article>
+<article id="airfoil"><a href="16-airfoil.jpg"><img src="16-airfoil.jpg" alt="NACA airfoil sketches" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>16</span>NACA airfoil sketches</h2><p>CREATE → NACA Airfoil: 4- and 5-digit sections from a code, chord and angle of attack, as a sketch on any plane or added to the open sketch, with a live preview and the section's thickness and camber.</p></div></article>
+<article id="flow2d"><a href="17-flow2d.jpg"><img src="17-flow2d.jpg" alt="2D Flow (GPU lattice Boltzmann)" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>17</span>2D Flow (GPU lattice Boltzmann)</h2><p>A quick 2D CFD of any closed sketch on the GPU: speed, vorticity or pressure with streamlines, live lift and drag coefficients and forces per metre of span, and an inviscid panel-method lift alongside.</p></div></article>
+<article id="cfd"><a href="18-cfd.jpg"><img src="18-cfd.jpg" alt="3D CFD inside the app" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>18</span>3D CFD inside the app</h2><p>SIMULATE → CFD Study runs the GPU CFD Sim solver in the background and draws the results in the viewport: surface pressure, vortex surfaces, streamlines, slices, legends and a frame player, with drag, lift and side force.</p></div></article>
+<article id="fea"><a href="19-fea.jpg"><img src="19-fea.jpg" alt="Static stress (FEA) inside the app" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>19</span>Static stress (FEA) inside the app</h2><p>SIMULATE → Static Stress: pick fixed faces and load faces, forces or pressure and gravity; FEA Sim meshes the exact geometry into quadratic tetrahedra and solves on the GPU. Results: deformed shape, safety factor, von Mises, displacement and principal stresses with min / max probes.</p></div></article>
+<article id="topo"><a href="20-topo.jpg"><img src="20-topo.jpg" alt="Shape Optimization (generative design)" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>20</span>Shape Optimization (generative design)</h2><p>Pick the faces that hold a part and the faces that carry loads, then ask for the lightest part that meets a safety factor (or a target mass). The body is voxelised and material is shaved away live over a ghost of the original; Create Body puts the result in the timeline.</p></div></article>
+<article id="under-construction"><a href="21-under-construction.jpg"><img src="21-under-construction.jpg" alt="Under-construction tape" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>21</span>Under-construction tape</h2><p>Every control that's there for the Fusion look but isn't built yet carries black-and-yellow tape: toolbar icons, menu items, the other tabs, and the Data Panel, notifications, comments and viewports buttons.</p></div></article>
+<article id="bug-report"><a href="22-bug-report.jpg"><img src="22-bug-report.jpg" alt="Bug reports" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>22</span>Bug reports</h2><p>The Bug report button saves your memo with the last five minutes of clicks and keys, a screenshot, the design and the app state into bug-reports/, ready for the next session to pick up.</p></div></article>
+<article id="dark-theme"><a href="23-dark-theme.jpg"><img src="23-dark-theme.jpg" alt="Dark theme" loading="lazy" width="1600" height="960"></a>
+<div><h2><span>23</span>Dark theme</h2><p>Light and dark themes (avatar menu or Display Settings), perspective / orthographic / perspective-with-ortho-faces cameras, ViewCube, and shaded / shaded-with-edges / wireframe styles.</p></div></article>
+</main></body></html>

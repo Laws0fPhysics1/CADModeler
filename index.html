@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CAD Modeler</title>
+  <script>try{document.documentElement.dataset.theme=JSON.parse(localStorage.getItem("cadmodeler.prefs")||"{}").theme==="dark"?"dark":"light"}catch(e){}</script>
+  <link rel="stylesheet" href="/src/style.css" />
+  <link rel="stylesheet" href="/src/sketch.css" />
+</head>
+<body>
+  <div id="loading"><div class="spinner"></div><div>Loading geometry kernel…</div></div>
+  <script type="module" src="/src/hero.js"></script>
+
+  <header id="appbar">
+    <div class="ab-left">
+      <button class="ab-btn" id="btnFile" title="File"></button>
+      <button class="ab-btn" id="btnSave" title="Save (Ctrl+S)"></button>
+      <button class="ab-btn" id="btnUndo" title="Undo (Ctrl+Z)"></button>
+      <button class="ab-btn" id="btnRedo" title="Redo (Ctrl+Y)"></button>
+    </div>
+    <div class="ab-tabs">
+      <button class="ab-btn ab-plus" id="btnNewTab" title="New Design"></button>
+    </div>
+    <div class="ab-right">
+      <button class="ab-btn bug-btn" id="btnBug" title="Report a bug"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5a2.5 2.5 0 0 1 5 0"/><rect x="4.5" y="4.5" width="7" height="8.5" rx="3.5"/><path d="M8 7v6M4.5 8H2M11.5 8H14M4.6 10.8l-2.1 1.4M11.4 10.8l2.1 1.4M4.8 5.8L3 4.3M11.2 5.8L13 4.3"/></svg><span>Bug report</span></button>
+      <button class="ab-btn bug-btn" id="btnFeature" title="Request a feature or change"><svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.8a4.2 4.2 0 0 0-2.6 7.5c.6.5.9 1.1.9 1.8v.4h3.4v-.4c0-.7.3-1.3.9-1.8A4.2 4.2 0 0 0 8 1.8Z"/><path d="M6.4 13.2h3.2M6.9 14.7h2.2"/></svg><span>Feature request</span></button>
+      <button class="ab-btn" id="btnBell" title="Notifications"></button>
+      <button class="ab-btn" id="btnHelp" title="Help"></button>
+      <button class="ab-btn" id="btnSettings" title="Settings"></button>
+    </div>
+  </header>
+
+  <div id="toolbar"></div>
+
+  <main id="workspace">
+    <canvas id="view"></canvas>
+    <div id="browser" class="panel"></div>
+    <div id="viewcube"><button class="home" title="Home"></button><canvas width="110" height="110"></canvas></div>
+    <div id="dialog" class="panel hidden"></div>
+    <div id="palette" class="panel hidden"></div>
+    <div id="navbar"></div>
+    <div id="annot"></div>
+    <div id="hud"></div>
+    <div id="snapGlyph"></div>
+    <div id="cursorTip"></div>
+    <div id="toast"></div>
+    <div id="comments"><span>COMMENTS</span><b>+</b></div>
+  </main>
+
+  <footer id="timeline"></footer>
+  <div id="menus"></div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>

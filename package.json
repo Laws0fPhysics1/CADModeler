@@ -1,0 +1,60 @@
+{
+  "name": "cad-modeler",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node electron/run.cjs start",
+    "desktop": "node electron/run.cjs start",
+    "desktop:dev": "node electron/run.cjs dev",
+    "smoke": "node electron/run.cjs start --smoke-ipc",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "package": "vite build && electron-builder --win nsis portable",
+    "package:dir": "vite build && electron-builder --win --dir"
+  },
+  "dependencies": {
+    "replicad": "^1.1.0",
+    "replicad-opencascadejs": "^1.1.0",
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3",
+    "vite": "^8.3.3"
+  },
+  "description": "Fusion 360-style parametric CAD modeler (desktop app)",
+  "main": "electron/main.cjs",
+  "author": "Austin Pufahl",
+  "build": {
+    "appId": "com.austin.cadmodeler",
+    "productName": "CAD Modeler",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "dist/**/*",
+      "electron/**/*",
+      "!electron/run.cjs",
+      "package.json",
+      "!node_modules/**/*"
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "artifactName": "${productName}-Setup-${version}.${ext}"
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
+    }
+  }
+}

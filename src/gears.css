@@ -1,0 +1,12 @@
+/* Gear Wizard (gearui.js), inside the feature dialog */
+.gw { width: 100%; }
+.gw .cfd-sec { margin-top: 8px; }
+.gw-info { margin-top: 8px; line-height: 1.5; }
+.gw-tab { border-collapse: collapse; width: 100%; margin-bottom: 4px; }
+.gw-tab td { padding: 1px 4px 1px 0; vertical-align: top; }
+.gw-tab td:first-child { font-weight: 600; white-space: nowrap; }
+.gw-warn { color: var(--warn-ink); background: var(--warn-bg); border-left: 3px solid var(--warn-border); padding: 2px 6px; margin-top: 3px; }
+.asm-teeth { display: flex; align-items: center; gap: 4px; }
+.asm-teeth .num { flex: 1; }
+.asm-followers { font-style: italic; }
+#dialog:has(.gw) { width: 330px; }

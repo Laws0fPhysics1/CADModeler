@@ -1,0 +1,66 @@
+/* ---------- bug report button + dialog ---------- */
+.ab-btn.bug-btn { width: auto; display: inline-flex; align-items: center; gap: 5px; padding: 5px 8px; font-size: 12px; white-space: nowrap; }
+.bug-btn svg { width: 16px; height: 16px; flex: none; }
+
+.bug-overlay { position: fixed; inset: 0; z-index: 10000; display: flex; align-items: center; justify-content: center; background: rgba(0, 0, 0, 0.28); }
+.bug-card { width: 420px; max-width: calc(100vw - 32px); background: var(--panel-solid, #fff); color: var(--ink, #333); border: 1px solid var(--line, #c8c8c8); border-radius: 3px; box-shadow: 0 6px 24px rgba(0, 0, 0, 0.28); font-size: 12px; }
+.bug-head { height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 12px; border-bottom: 1px solid var(--line, #e0e0e0); font-weight: 700; font-size: 11.5px; letter-spacing: 0.5px; }
+.bug-head span { flex: 1; }
+.bug-head .bug-x { width: 22px; height: 22px; padding: 4px; color: var(--ink-soft, #777); border-radius: 2px; }
+.bug-head .bug-x:hover { background: var(--hover, #e6f3fb); }
+.bug-body { padding: 10px 12px 6px; display: flex; flex-direction: column; gap: 8px; }
+.bug-body label.bug-lbl { font-weight: 600; }
+.bug-body textarea { width: 100%; box-sizing: border-box; min-height: 110px; resize: vertical; font: inherit; padding: 6px; border: 1px solid #c4c4c4; border-radius: 2px; background: var(--input-bg, #fff); color: inherit; outline: none; }
+.bug-body textarea:focus { border-color: var(--blue, #0696d7); }
+.bug-checks { display: flex; gap: 16px; }
+.bug-checks label { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.bug-note { color: var(--ink-soft, #6b6b6b); line-height: 1.5; }
+.bug-msg { display: none; padding: 6px 8px; border-radius: 2px; line-height: 1.4; word-break: break-all; }
+.bug-msg.ok { display: block; background: #e3f4e8; border: 1px solid #a9d8b6; color: #1d6b34; }
+.bug-msg.err { display: block; background: #fff3cd; border: 1px solid #f0d78a; color: #7a5b00; }
+.bug-foot { display: flex; align-items: center; justify-content: flex-end; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--line, #e6e6e6); }
+.bug-foot .bug-hint { flex: 1; color: var(--ink-soft, #888); font-size: 11px; }
+.bug-foot button { min-width: 72px; height: 26px; padding: 0 12px; font: inherit; border-radius: 2px; border: 1px solid #b9b9b9; background: var(--panel-solid, #fff); color: inherit; cursor: pointer; }
+.bug-foot button:hover { background: var(--hover, #eef6fb); }
+.bug-foot button.primary { background: #0696d7; border-color: #0696d7; color: #fff; }
+.bug-foot button.primary:hover { background: #0585bf; }
+.bug-foot button:disabled { opacity: 0.55; cursor: default; }
+
+:root[data-theme="dark"] .bug-overlay { background: rgba(0, 0, 0, 0.5); }
+:root[data-theme="dark"] .bug-card { background: var(--panel-solid, #2b2d30); color: var(--ink, #ddd); border-color: var(--line, #44474b); }
+:root[data-theme="dark"] .bug-body textarea { background: var(--input-bg, #1f2023); border-color: #50545a; }
+:root[data-theme="dark"] .bug-foot button:not(.primary) { background: #34373b; border-color: #50545a; }
+:root[data-theme="dark"] .bug-foot button:not(.primary):hover { background: #3d4045; }
+:root[data-theme="dark"] .bug-msg.ok { background: #1f3a27; border-color: #2f6a40; color: #9fdcb0; }
+:root[data-theme="dark"] .bug-msg.err { background: #3d3418; border-color: #6b5a22; color: #f0d78a; }
+
+/* Bug Reports panel (bugstatusui.js) */
+.bug-badge { min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: #d9443a; color: #fff; font-size: 10px; font-weight: 700; line-height: 16px; text-align: center; }
+.bug-foot .bug-link { margin-right: auto; }
+.bl-card { width: 640px; max-height: calc(100vh - 80px); display: flex; flex-direction: column; }
+.bl-tabs { display: flex; gap: 2px; padding: 6px 10px 0; border-bottom: 1px solid var(--line, #e0e0e0); }
+.bl-tab { padding: 5px 9px; border: 1px solid transparent; border-bottom: none; border-radius: 3px 3px 0 0; color: var(--ink-soft, #666); }
+.bl-tab.on { border-color: var(--line, #d0d0d0); background: var(--panel-solid, #fff); color: var(--ink, #222); font-weight: 600; margin-bottom: -1px; }
+.bl-list { overflow-y: auto; padding: 6px 10px; flex: 1; min-height: 120px; }
+.bl-empty { padding: 24px; text-align: center; color: var(--ink-soft, #888); }
+.bl-row { border: 1px solid var(--line, #e2e2e2); border-left: 4px solid #9aa4ae; border-radius: 3px; padding: 6px 8px; margin-bottom: 6px; }
+.bl-row.st-untouched { border-left-color: #d9443a; }
+.bl-row.st-in-work { border-left-color: #e2a21b; }
+.bl-row.st-resolved { border-left-color: #3fa34d; opacity: 0.8; }
+.bl-top { display: flex; align-items: center; gap: 8px; }
+.bl-when { font-weight: 600; }
+.bl-tag, .bl-by { font-size: 10.5px; color: var(--ink-soft, #888); }
+.bl-tag { border: 1px solid var(--line, #ddd); border-radius: 8px; padding: 0 6px; }
+.bl-status { margin-left: auto; height: 22px; font: inherit; border-radius: 2px; border: 1px solid var(--line, #ccc); background: var(--input-bg, #fff); color: var(--input-ink, #222); }
+.bl-status.st-untouched { color: #d9443a; }
+.bl-status.st-in-work { color: #c4860c; }
+.bl-status.st-resolved { color: #3a9446; }
+.bl-memo { margin: 4px 0; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.bl-note { width: 100%; height: 22px; font: inherit; border: 1px solid var(--line, #ddd); border-radius: 2px; padding: 0 6px; background: var(--input-bg, #fff); color: var(--input-ink, #222); box-sizing: border-box; }
+.bl-views { display: flex; gap: 4px; padding: 8px 10px 0; }
+.bl-view { padding: 4px 10px; border: 1px solid var(--line, #d0d0d0); border-radius: 12px; color: var(--ink-soft, #666); }
+.bl-view.on { background: var(--blue, #0696d7); border-color: var(--blue, #0696d7); color: #fff; font-weight: 600; }
+.bl-sub { padding: 6px 0; color: var(--ink-soft, #777); font-size: 11.5px; }
+.bl-kind { font-size: 10px; font-weight: 700; padding: 0 6px; border-radius: 8px; color: #fff; }
+.bl-kind.k-bug { background: #d9443a; }
+.bl-kind.k-feature { background: #7a5bd0; }

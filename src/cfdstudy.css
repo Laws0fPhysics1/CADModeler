@@ -1,0 +1,45 @@
+/* CFD STUDY dialog. Builds on .panel / .dlg-* / .num / .btn from style.css; colours come from the theme variables. */
+.cfd-dlg { top: 140px; right: 14px; width: 340px; max-height: calc(100% - 160px); display: flex; flex-direction: column; font-size: 12px; color: var(--ink); z-index: 20; }
+.cfd-dlg .dlg-body { overflow-y: auto; min-height: 0; flex: 1; }
+.cfd-dlg.cfd-flash { box-shadow: 0 0 0 2px var(--blue), 0 2px 8px var(--panel-shadow); }
+.cfd-ic { color: var(--blue); }
+.cfd-ic svg { width: 20px; height: 20px; display: block; }
+.cfd-dlg .dlg-head .x svg { width: 14px; height: 14px; display: block; }
+
+.cfd-sec { margin: 8px 0 2px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--ink-5); }
+.cfd-sec:first-child { margin-top: 0; }
+
+.cfd-bodies { max-height: 120px; overflow-y: auto; border: 1px solid var(--input-border); border-radius: 2px; background: var(--input-bg); padding: 2px 0; margin-bottom: 2px; }
+.cfd-bodies .cfd-check { padding: 3px 6px; }
+.cfd-bodies .cfd-check:hover { background: var(--hover); }
+.cfd-check { display: flex; align-items: center; gap: 6px; cursor: pointer; min-width: 0; flex: 1; color: var(--ink-2); }
+.cfd-check input { margin: 0; flex: none; }
+.cfd-bname { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cfd-check em { margin-left: auto; font-style: normal; color: var(--ink-6); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 45%; }
+.cfd-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; background: var(--ink-off); border: 1px solid var(--panel-border); }
+.cfd-indent { padding-left: 18px; }
+.cfd-muted { color: var(--ink-6); }
+
+.cfd-info { margin-top: 6px; padding: 6px 8px; border: 1px solid var(--sep-2); border-radius: 2px; background: var(--sel-active-bg); line-height: 1.55; }
+.cfd-note { margin: 6px 0; padding: 6px 8px; background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-ink); border-radius: 2px; line-height: 1.4; }
+
+.cfd-status { margin: 6px 0 4px; padding: 6px 8px; border: 1px solid var(--sep-2); border-radius: 2px; line-height: 1.5; }
+.cfd-status code { font-size: 11px; }
+.cfd-path { display: flex; gap: 8px; align-items: center; min-width: 0; }
+.cfd-path span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; color: var(--ink-2); user-select: text; }
+.cfd-path a, .cfd-status a { color: var(--blue); text-decoration: none; flex: none; }
+.cfd-path a:hover { text-decoration: underline; }
+.cfd-live { margin-top: 4px; }
+.cfd-prog-head { display: flex; justify-content: space-between; align-items: baseline; }
+.cfd-bar { height: 4px; margin: 4px 0; background: var(--spinner-track); border-radius: 2px; overflow: hidden; }
+.cfd-bar i { display: block; height: 100%; background: var(--blue); transition: width 0.4s; }
+.cfd-res { border-collapse: collapse; margin: 4px 0; width: 100%; }
+.cfd-res td { padding: 1px 6px 1px 0; }
+.cfd-res td:nth-child(odd) { color: var(--ink-6); }
+.cfd-res td:nth-child(2) { font-weight: 600; padding-right: 16px; }
+.cfd-ok { color: var(--ink-ok); }
+.cfd-bad { color: var(--ink-err); }
+
+.cfd-foot { flex-wrap: wrap; }
+.cfd-foot .btn { padding: 0 10px; min-width: 0; }
+.cfd-foot .btn:disabled { opacity: 0.5; cursor: default; }

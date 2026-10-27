@@ -1,0 +1,42 @@
+/* Static Stress study dialog + results. Builds on .cfd-dlg / .cfd-* (cfdstudy.css), .cfr-* (cfdresults.css)
+   and .panel / .dlg-* / .sel-btn / .num from style.css; colours come from the theme variables. */
+.fea-ic { color: #e8742a; }
+.fea-ic svg { width: 20px; height: 20px; display: block; }
+.fea-dlg { width: 330px; }
+.fea-dlg .dlg-row select { width: 100%; min-width: 0; }
+.fea-dlg .sel-btn .arrow svg, .fea-dlg .sel-btn .clr svg { width: 12px; height: 12px; display: block; }
+.fea-dlg .sel-btn .clr { cursor: pointer; }
+
+.fea-loads { display: flex; flex-direction: column; gap: 6px; }
+.fea-load { border: 1px solid var(--sep-2); border-radius: 2px; padding: 4px 6px 2px; }
+.fea-load.on { border-color: var(--blue); }
+.fea-load-head { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; font-weight: 600; color: var(--ink-2); }
+.fea-load-head span { flex: 1; }
+.fea-load-head select { width: auto; min-width: 96px; }
+.fea-rm { width: 18px; height: 18px; display: grid; place-items: center; color: var(--ink-5); border-radius: 2px; }
+.fea-rm:hover { background: var(--hover); color: var(--ink); }
+.fea-rm svg { width: 11px; height: 11px; }
+.fea-dir { display: flex; align-items: center; gap: 8px; width: 100%; }
+.fea-dir select { flex: 1; min-width: 0; }
+.fea-dir .cfd-check { flex: none; }
+.fea-pin-dofs { display: flex; gap: 12px; padding: 2px 0 2px 2px; flex-wrap: wrap; }
+.fea-pin-dofs .cfd-check { flex: none; }
+.fea-load .num select { border: 0; background: transparent; color: var(--ink-5); font-size: 11px; padding: 0 2px; }
+.fea-hint { font-size: 11px; padding: 0 0 4px; }
+.fea-add { margin: 6px 0 2px; height: 22px; padding: 0 10px; }
+.fea-tip { color: var(--blue); }
+
+/* results panel */
+.fea-res-panel { width: 300px; }
+.fea-res td:nth-child(2) { text-align: right; }
+.fea-warn { margin: 6px 0 2px; padding: 5px 7px; background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-ink); border-radius: 2px; line-height: 1.35; font-size: 11px; }
+.fea-warn div + div { margin-top: 3px; }
+.fea-adjrow { margin-top: -2px; }
+.fea-adj { display: flex; align-items: center; gap: 8px; }
+.fea-adj input[type="range"] { flex: 1; min-width: 0; accent-color: var(--blue); }
+.fea-adj input[type="range"]:disabled { opacity: 0.4; }
+.fea-scale { min-width: 54px; text-align: right; font-variant-numeric: tabular-nums; color: var(--ink-5); font-size: 11px; }
+.fea-display .cfd-check { padding: 3px 0; }
+
+.fea-probes { position: absolute; inset: 0; pointer-events: none; z-index: 4; overflow: hidden; }
+.fea-probe { position: absolute; padding: 1px 6px; font-size: 10.5px; white-space: nowrap; color: var(--ink); background: var(--panel); border: 1px solid var(--panel-border); border-radius: 2px; box-shadow: 0 1px 3px var(--panel-shadow); font-variant-numeric: tabular-nums; }
