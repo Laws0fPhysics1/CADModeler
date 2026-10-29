@@ -253,6 +253,7 @@ export async function buildCase({ designName, bodies = [], stlBytes, appearances
       flowThroughs: +s.flowThroughs,
       frames: s.frames == null ? null : Math.round(+s.frames),
       gpu: s.gpu !== false,
+      ...(s.maxBlockage != null ? { maxBlockage: +s.maxBlockage } : {}),
     },
     estimates: { lengthM: round6(summary.lengthM), frontalAreaM2: round6(summary.frontalM2), reynolds: Math.round(summary.reynolds) },
     results: { progress: PROGRESS_FILE, results: RESULTS_FILE },
@@ -316,6 +317,7 @@ export function validateCase(c) {
   if (s.precision != null && !PRECISIONS.includes(s.precision)) err("solver.precision must be one of " + PRECISIONS.join(" "));
   if (s.flowThroughs != null && !(isNum(s.flowThroughs) && s.flowThroughs > 0)) err("solver.flowThroughs must be > 0");
   if (s.frames != null && !(Number.isInteger(s.frames) && s.frames >= 1)) err("solver.frames must be an integer >= 1");
+  if (s.maxBlockage != null && !(isNum(s.maxBlockage) && s.maxBlockage >= 0 && s.maxBlockage < 0.5)) err("solver.maxBlockage must be a fraction in [0, 0.5)");
   if (!c.results || typeof c.results.results !== "string" || typeof c.results.progress !== "string") err("results.results / results.progress file names missing");
   return { ok: errors.length === 0, errors, warnings };
 }

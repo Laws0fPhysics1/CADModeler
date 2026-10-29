@@ -1,6 +1,7 @@
 // GPU (WebGL2) version of the 2D lattice Boltzmann solver in cfd2d.js: same D2Q9 BGK +
-// Smagorinsky collision, pull streaming, halfway bounce-back, inlet / far-field / outlet and
-// sponge, so its forces match the CPU class (tests/cfd2d.test.mjs runs the CPU one).
+// Smagorinsky collision, pull streaming, halfway bounce-back, the same non-equilibrium-
+// extrapolation boundaries (velocity inlet, pressure outlet, free-slip top / bottom), start-up ramp and sponge,
+// so its forces match the CPU class (tests/generative.test.mjs runs the CPU one).
 //
 // State lives in float textures (nx * ny): A = f0..f3, B = f4..f7, C = (f8, rho, ux, uy),
 // ping-ponged through one framebuffer with four colour attachments; the fourth (F) holds each
@@ -17,7 +18,8 @@ precision highp float; precision highp int; precision highp sampler2D;
 uniform sampler2D A, B, C, M;
 uniform ivec2 size;
 uniform vec2 uin;
-uniform float tau0, cs2, sx0;
+uniform float tau0, cs2, sx0, vkeep;
+uniform int side;       // top / bottom: 0 free slip, 1 free-stream velocity, 2 zero gradient
 layout(location = 0) out vec4 oA;
 layout(location = 1) out vec4 oB;
 layout(location = 2) out vec4 oC;
@@ -41,8 +43,18 @@ void main() {
   vec2 mom = vec2(0);
   for (int i = 0; i < 9; i++) {
     ivec2 n = q - CI[i];
-    if (n.x < 0) { f[i] = feq(i, 1.0, uin); continue; }
-    n = clamp(n, ivec2(0), size - 1); // zero-gradient top, bottom and outlet
+    if (any(lessThan(n, ivec2(0))) || any(greaterThanEqual(n, size))) {
+      // ghost cell by non-equilibrium extrapolation from its nearest interior cell (as LBM2D.fillGhosts)
+      ivec2 k = clamp(n, ivec2(0), size - 1);
+      vec4 c = texelFetch(C, k, 0);
+      float rb = c.y; vec2 ub = c.zw;
+      if (n.x < 0) ub = vec2(uin.x, vkeep * c.w + uin.y); // velocity inlet (v zero-gradient after start-up)
+      else if (n.x >= size.x) rb = 1.0;           // pressure outlet
+      else if (side == 0) ub.y = 0.0;             // free slip
+      else if (side == 1) ub = vec2(uin.x, 0.0);  // free-stream velocity
+      f[i] = feq(i, rb, ub) + comp(k, i) - feq(i, c.y, c.zw);
+      continue;
+    }
     if (texelFetch(M, n, 0).r > 0.5) { float b = comp(q, OPP[i]); f[i] = b; mom += 2.0 * b * vec2(CI[i]); continue; }
     f[i] = comp(n, i);
   }
@@ -67,13 +79,18 @@ void main() {
   oF = vec4(mom, 0, 0);
 }`;
 
+// start from the uniform free stream (rho 1, u = (u0, 0)), as LBM2D.init
 const INIT_FS = `#version 300 es
 precision highp float;
+uniform float u0;
 layout(location = 0) out vec4 oA; layout(location = 1) out vec4 oB; layout(location = 2) out vec4 oC; layout(location = 3) out vec4 oF;
+const float WI[9] = float[9](${W.map((w) => w.toFixed(9)).join(", ")});
+const float CXI[9] = float[9](0.0, 1.0, 0.0, -1.0, 0.0, 1.0, -1.0, -1.0, 1.0);
+float fe(int i) { float cu = 3.0 * CXI[i] * u0; return WI[i] * (1.0 + cu + 0.5 * cu * cu - 1.5 * u0 * u0); }
 void main() {
-  oA = vec4(${W.slice(0, 4).map((w) => w.toFixed(9)).join(", ")});
-  oB = vec4(${W.slice(4, 8).map((w) => w.toFixed(9)).join(", ")});
-  oC = vec4(${W[8].toFixed(9)}, 1.0, 0.0, 0.0); oF = vec4(0);
+  oA = vec4(fe(0), fe(1), fe(2), fe(3));
+  oB = vec4(fe(4), fe(5), fe(6), fe(7));
+  oC = vec4(fe(8), 1.0, u0, 0.0); oF = vec4(0);
 }`;
 
 // field display: speed / vorticity / pressure through a colour map, the body in grey
@@ -187,18 +204,20 @@ export class LBM2DGPU {
     this.box.w = Math.min(nx, i1 + 2) - this.box.x; this.box.h = Math.min(ny, j1 + 2) - this.box.y;
     this.fbuf = new Float32Array(this.box.w * this.box.h * 4);
     this.t = 0;
-    this.ramp = Math.max(400, Math.round((2 * cs.refCells) / cs.U));
+    this.ramp = cs.ramp; // smooth start (setupCase)
     this.sx0 = Math.floor((nx + 2) * 0.88);
     this.Fx = 0; this.Fy = 0;
     this.history = [];
     this.init();
   }
-  uIn() { const s = Math.min(1, this.t / this.ramp); return this.cs.U * (s * s * (3 - 2 * s)); }
-  vIn() { return this.t < this.ramp ? 0.03 * this.cs.U * Math.sin((2 * Math.PI * this.t) / this.ramp) : 0; }
+  uIn() { if (!this.ramp) return this.cs.U; const s = Math.min(1, this.t / this.ramp); return this.cs.U * (s * s * (3 - 2 * s)); }
+  vIn() { return this.t < (this.ramp || 400) ? 0.03 * this.cs.U * Math.sin((2 * Math.PI * this.t) / (this.ramp || 400)) : 0; }
+  vKeep() { return this.cs.inletV === "fixed" || this.t < (this.ramp || 400) ? 0 : 1; }
   quad() { this.gl.bindVertexArray(this.vao); this.gl.drawArrays(this.gl.TRIANGLE_STRIP, 0, 4); }
   init() {
     const gl = this.gl;
     gl.useProgram(this.init_.p);
+    gl.uniform1f(this.init_.u.u0, this.cs.ramp ? 0 : this.cs.U);
     gl.viewport(0, 0, this.cs.nx, this.cs.ny);
     for (const s of this.sets) { gl.bindFramebuffer(gl.FRAMEBUFFER, s.fb); this.quad(); }
     this.t = 0; this.history = [];
@@ -211,12 +230,14 @@ export class LBM2DGPU {
     gl.uniform1f(u.tau0, this.cs.tau);
     gl.uniform1f(u.cs2, this.cs.cs * this.cs.cs * 18 * Math.SQRT2);
     gl.uniform1f(u.sx0, this.sx0);
+    gl.uniform1i(u.side, { slip: 0, free: 1, copy: 2 }[this.cs.side || "slip"] ?? 0);
     ["A", "B", "C", "M"].forEach((k, i) => gl.uniform1i(u[k], i));
     gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, this.mask);
     for (let s = 0; s < n; s++) {
       const src = this.sets[this.cur], dst = this.sets[1 - this.cur];
       for (let i = 0; i < 3; i++) { gl.activeTexture(gl.TEXTURE0 + i); gl.bindTexture(gl.TEXTURE_2D, src.t[i]); }
       gl.uniform2f(u.uin, this.uIn(), this.vIn());
+      gl.uniform1f(u.vkeep, this.vKeep());
       gl.bindFramebuffer(gl.FRAMEBUFFER, dst.fb);
       this.quad();
       this.cur = 1 - this.cur;
@@ -239,7 +260,7 @@ export class LBM2DGPU {
   get passes() { return (this.t * this.cs.U) / this.cs.refCells; }
   mean(window = 2) {
     const U = this.cs.U, Lc = this.cs.refCells;
-    const tMin = Math.max(this.ramp * 1.5, this.t - (window * Lc) / U);
+    const tMin = Math.max(this.ramp * 1.2, this.t - (window * Lc) / U);
     const h = this.history.filter((p) => p.t >= tMin);
     if (h.length < 5) return null;
     let cd = 0, cl = 0, clMin = Infinity, clMax = -Infinity;

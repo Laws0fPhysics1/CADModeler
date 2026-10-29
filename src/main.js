@@ -786,8 +786,7 @@ function enterSketch(feature, editIndex, model) {
   logEvent("sketch enter", { name: feature.name, plane: feature.plane, planeRef: feature.planeRef, editIndex });
   app.mode = "sketch";
   const base = editIndex == null ? app.state : K.evaluate(doc().features, editIndex);
-  let plane = feature.plane;
-  if (feature.planeRef && feature.planeRef.kind === "cplane" && base.planes[feature.planeRef.id]) plane = base.planes[feature.planeRef.id].plane;
+  const plane = K.sketchPlane(base, feature); // construction plane or re-resolved face, as the replay does
   const model2d = model || SM.normalizeSketch(feature, K.to2D(plane, [0, 0, 0]));
   app.selection = [];
   show(base, { activeSketchId: feature.id });

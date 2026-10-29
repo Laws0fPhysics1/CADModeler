@@ -3,9 +3,11 @@
 // at the low lattice viscosities that higher Reynolds numbers need. Fused pull streaming
 // with halfway bounce-back on the body; forces by momentum exchange on the bounce-back links.
 //
-// Boundaries: velocity inlet (left) as equilibrium ghost cells; zero-gradient top, bottom and
-// outlet (right), so a lifting section's circulation isn't pinned to the free stream at the
-// edges; a sponge layer before the outlet soaks up wake eddies before they reflect. Flow runs along +x; the body is rotated for angle of attack, so lift
+// Boundaries (ghost cells by non-equilibrium extrapolation, see fillGhosts): velocity inlet
+// (left), pressure outlet rho = 1 (right), free-slip top and bottom; a sponge layer before the
+// outlet soaks up wake eddies before they reflect. The inlet speed ramps up smoothly over several
+// acoustic transits of the box (setupCase.ramp): a fast or impulsive start rings the box's
+// sound modes, which these reflecting boundaries and the low lattice viscosity barely damp. Flow runs along +x; the body is rotated for angle of attack, so lift
 // is the +y force and drag the +x force. Lattice units: rho0 = 1, cs^2 = 1/3.
 
 export const CX = [0, 1, 0, -1, 0, 1, -1, -1, 1];
@@ -122,7 +124,8 @@ export function setupCase(loops, opts = {}) {
   const dx = ref / cells;
   // keep blockage near 10 % for bluff sections; slender ones (airfoils) get 1.3 lengths each side
   const dm = opts.domain || 1;
-  const up = 2 * span * dm, down = 4 * span * dm, side = Math.max(2 * span * dm, 4.5 * b.h);
+  const B = opts.box || [2, 4, 2, 10, 20, 15];
+  const up = Math.max(B[0] * span, B[3] * b.h) * dm, down = Math.max(B[1] * span, B[4] * b.h) * dm, side = Math.max(B[2] * span, B[5] * b.h) * dm;
   const nx = Math.ceil((b.w + up + down) / dx), ny = Math.ceil((b.h + 2 * side) / dx);
   if (nx * ny > 1.6e6) throw new Error("That grid is too big; pick a coarser resolution");
   const x0 = b.x0 - up, y0 = b.y0 - side;
@@ -142,7 +145,11 @@ export function setupCase(loops, opts = {}) {
   if (loops.length === 1) { try { panel = panelMethod(loops[0], opts.alpha || 0); } catch { panel = null; } }
   return {
     nx, ny, dx, x0, y0, solid, loops: rot, panel, refCells: Lc, refLength: ref, alpha: opts.alpha || 0,
-    U: U_LB, nu, tau: 3 * nu + 0.5, cs: opts.cs ?? 0.16,
+    U: U_LB, nu, tau: 3 * nu + 0.5, cs: opts.cs ?? 0.16, side: opts.side || "slip", inletV: opts.inletV || "free",
+    // start-up ramp in steps: about six acoustic transits of the box (sqrt(3) steps per cell) so
+    // the inlet-outlet and wall-wall sound modes, which the low lattice viscosity hardly damps, are
+    // not rung up; opts.ramp: 0 for an impulsive start from the uniform free stream, or a step count
+    ramp: opts.ramp != null ? opts.ramp : Math.round(Math.max(400, (2 * Lc) / U_LB, 6 * Math.sqrt(3) * Math.max(nx, ny))),
     Re, ReTrue, clamped: ReTrue > ReMax * 1.0001,
     fluid: { ...fluid, id: opts.fluid || "air" }, speed,
     // lattice step in seconds: dx / dt = U_phys / U_lb
@@ -173,27 +180,51 @@ export class LBM2D {
     this.near = new Uint8Array(N);
     for (let k = this.NX; k < N - this.NX; k++) if (!this.wall[k]) for (let q = 1; q < 9; q++) if (this.wall[k - this.off[q]]) { this.near[k] = 1; break; }
     this.t = 0;
-    this.ramp = Math.max(400, Math.round(2 * cs.refCells / cs.U)); // smooth start over ~2 chord passes
+    this.ramp = cs.ramp; // smooth start (setupCase)
     this.Fx = 0; this.Fy = 0;
     this.history = []; // {t, cd, cl}
     this.init();
   }
-  uIn() { const s = Math.min(1, this.t / this.ramp); return this.cs.U * (s * s * (3 - 2 * s)); }
+  uIn() { if (!this.ramp) return this.cs.U; const s = Math.min(1, this.t / this.ramp); return this.cs.U * (s * s * (3 - 2 * s)); }
   // a brief cross-flow wobble during start-up breaks the mirror symmetry, so wakes that want to shed do
-  vIn() { return this.t < this.ramp ? 0.03 * this.cs.U * Math.sin((2 * Math.PI * this.t) / this.ramp) : 0; }
+  vIn() { return this.t < (this.ramp || 400) ? 0.03 * this.cs.U * Math.sin((2 * Math.PI * this.t) / (this.ramp || 400)) : 0; }
+  // after the wobble the inlet keeps the interior's cross-flow (zero gradient in v), so a lifting
+  // section's upwash isn't forced to zero a couple of chords upstream
+  vKeep() { return this.cs.inletV === "fixed" || this.t < (this.ramp || 400) ? 0 : 1; }
   init() {
-    const { N } = this;
-    for (let i = 0; i < 9; i++) this.f.fill(W[i], i * N, (i + 1) * N);
+    const { N } = this, u = this.cs.ramp ? 0 : this.cs.U;
+    for (let i = 0; i < 9; i++) { const cu = 3 * CX[i] * u; this.f.fill(W[i] * (1 + cu + 0.5 * cu * cu - 1.5 * u * u), i * N, (i + 1) * N); }
     this.g.set(this.f);
   }
+  /**
+   * Boundary ghost cells by non-equilibrium extrapolation (Guo, Zheng & Shi 2002): a ghost
+   * takes feq(rho_b, u_b) plus the non-equilibrium part of its nearest interior cell. Inlet:
+   * u_b.x = free stream, u_b.y and rho_b from the interior (a velocity inlet that lets
+   * a lifting section's upwash through). Outlet: rho_b = 1, u_b from
+   * the interior (a pressure outlet, which pins the mean density). Top and bottom: free slip
+   * (u_b = interior u with v = 0, rho_b from the interior). cfd2dgpu.js does the same per texel.
+   */
   fillGhosts(src) {
-    const { NX, NY, N } = this, u = this.uIn(), v = this.vIn();
-    const feq = W.map((w, i) => { const cu = 3 * (CX[i] * u + CY[i] * v); return w * (1 + cu + 0.5 * cu * cu - 1.5 * (u * u + v * v)); });
-    for (let i = 0; i < 9; i++) {
-      const o = i * N;
-      for (let x = 1; x < NX - 1; x++) { src[o + x] = src[o + NX + x]; src[o + (NY - 1) * NX + x] = src[o + (NY - 2) * NX + x]; }
-      for (let j = 0; j < NY; j++) { src[o + j * NX] = feq[i]; src[o + j * NX + NX - 1] = src[o + j * NX + NX - 2]; }
-    }
+    const { NX, NY, N } = this, uin = this.uIn(), vin = this.vIn(), vk = this.vKeep(), side = this.cs.side || "slip";
+    const ghost = (g, k) => {
+      let r = 0, mx = 0, my = 0;
+      for (let q = 0; q < 9; q++) { const v = src[q * N + k]; r += v; mx += v * CX[q]; my += v * CY[q]; }
+      const ux = mx / r, uy = my / r;
+      const gx = g % NX, gy = (g - gx) / NX;
+      let rb = r, ub = ux, vb = uy;
+      if (gx === 0) { ub = uin; vb = vk * uy + vin; }
+      else if (gx === NX - 1) rb = 1;
+      else if (side === "slip") vb = 0;
+      else if (side === "free") { ub = uin; vb = 0; }
+      const u2 = 1.5 * (ub * ub + vb * vb), n2 = 1.5 * (ux * ux + uy * uy);
+      for (let q = 0; q < 9; q++) {
+        const cb = 3 * (CX[q] * ub + CY[q] * vb), cn = 3 * (CX[q] * ux + CY[q] * uy);
+        src[q * N + g] = W[q] * (rb * (1 + cb + 0.5 * cb * cb - u2) - r * (1 + cn + 0.5 * cn * cn - n2)) + src[q * N + k];
+      }
+    };
+    const cl = (v, hi) => (v < 1 ? 1 : v > hi ? hi : v);
+    for (let x = 0; x < NX; x++) { ghost(x, NX + cl(x, NX - 2)); ghost((NY - 1) * NX + x, (NY - 2) * NX + cl(x, NX - 2)); }
+    for (let y = 1; y < NY - 1; y++) { ghost(y * NX, y * NX + 1); ghost(y * NX + NX - 1, y * NX + NX - 2); }
   }
   step(n = 1) {
     const { NX, NY, N, wall, near, off, omega } = this;
@@ -260,7 +291,7 @@ export class LBM2D {
   /** Mean coefficients over the last `window` chord passes (skipping the start-up ramp). */
   mean(window = 2) {
     const U = this.cs.U, Lc = this.cs.refCells;
-    const tMin = Math.max(this.ramp * 1.5, this.t - (window * Lc) / U);
+    const tMin = Math.max(this.ramp * 1.2, this.t - (window * Lc) / U);
     const h = this.history.filter((p) => p.t >= tMin);
     if (h.length < 5) return null;
     let cd = 0, cl = 0, clMin = Infinity, clMax = -Infinity;
@@ -312,6 +343,15 @@ export function panelMethod(loop, alphaDeg = 0) {
   let te = 0, best = -1;
   for (let i = 0; i < N; i++) { const d = Math.hypot(P[i][0] - P[le][0], P[i][1] - P[le][1]); if (d > best) { best = d; te = i; } }
   P = [...P.slice(te), ...P.slice(0, te)];
+  // a blunt trailing edge: the panel on either side of the TE vertex may be the short base
+  // across the gap (roughly normal to the chord). Re-start the ring so the base is the last
+  // panel; the Kutta condition then goes on the upper and lower surface panels next to it,
+  // and the base keeps only its no-penetration condition.
+  const L0 = P[(le - te + N) % N], ex = (P[0][0] - L0[0]) / best, ey = (P[0][1] - L0[1]) / best;
+  const isBase = (a, b) => { const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy); return l < 0.05 * best && Math.abs(dx * ex + dy * ey) < 0.5 * l; };
+  let base = false;
+  if (isBase(P[0], P[1])) { P = [...P.slice(1), P[0]]; base = true; }
+  else if (isBase(P[N - 1], P[0])) base = true;
   const chord = best;
   const X = P.map((p) => p[0]), Y = P.map((p) => p[1]);
   X.push(X[0]); Y.push(Y[0]);
@@ -340,9 +380,10 @@ export function panelMethod(loop, alphaDeg = 0) {
     }
     M[i][N + 1] = Math.sin(th[i] - al);
   }
-  const r1 = Bt(0), rN = Bt(N - 1);
+  const kl = base ? N - 2 : N - 1; // last surface panel before the TE (skipping a blunt base)
+  const r1 = Bt(0), rN = Bt(kl);
   for (let j = 0; j <= N; j++) M[N][j] = r1[j] + rN[j];
-  M[N][N + 1] = -(Math.cos(th[0] - al) + Math.cos(th[N - 1] - al));
+  M[N][N + 1] = -(Math.cos(th[0] - al) + Math.cos(th[kl] - al));
   // Gaussian elimination with partial pivoting
   const n = N + 1;
   for (let c = 0; c < n; c++) {

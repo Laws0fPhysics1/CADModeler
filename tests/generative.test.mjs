@@ -1,5 +1,5 @@
 // NACA airfoils, 2D flow (CPU lattice Boltzmann + panel method) and shape optimization:
-// node tests/generative.test.mjs   (about 30 s)
+// node tests/generative.test.mjs   (about 40 s)
 import assert from "node:assert/strict";
 import { parseNaca, nacaEntities, unitArea } from "../src/airfoil.js";
 import { setupCase, LBM2D, entitiesToLoops, panelMethod, rasterize } from "../src/cfd2d.js";
@@ -38,21 +38,39 @@ t("panel method: inviscid lift matches thin-airfoil / XFOIL-inviscid values", ()
   near(cl("2412", 0), 0.26, 0.015, "2412 @0");
   near(cl("4412", 0), 0.52, 0.02, "4412 @0");
 });
+t("panel method: a blunt trailing edge lifts like the sharp one (Kutta on the surface panels, not the base)", () => {
+  const cl = (code, a, closedTE) => panelMethod(entitiesToLoops(nacaEntities(code, { n: 80, closedTE }).entities)[0], a).cl;
+  near(cl("0012", 0, false), 0, 1e-6, "blunt 0012 @0");
+  for (const [code, a] of [["0012", 5], ["2412", 0], ["2412", 5], ["4412", 0], ["4412", 10]]) {
+    const sharp = cl(code, a, true), blunt = cl(code, a, false);
+    near(blunt, sharp, 0.03 * Math.abs(sharp), `blunt ${code} @${a}`);
+  }
+  near(cl("2412", 5, false), 0.864, 0.02, "blunt 2412 @5 vs XFOIL inviscid");
+});
 t("rasterize: even-odd fill of a square with a hole", () => {
   const sq = (c, r) => [[c - r, c - r], [c + r, c - r], [c + r, c + r], [c - r, c + r]];
   const s = rasterize([sq(10, 8), sq(10, 3)], 20, 20, 0, 0, 1);
   const filled = s.reduce((a, b) => a + b, 0);
   assert.equal(filled, 16 * 16 - 6 * 6);
 });
-t("lattice Boltzmann: cylinder drag at Re 40 (literature 1.5-1.6, ~10 % blockage raises it)", () => {
-  const loops = entitiesToLoops([{ type: "circle", c: [0, 0], r: 10 }]);
-  const cs = setupCase(loops, { fluid: "air", speed: (40 * 1.516e-5) / 0.02, resolution: 20 });
-  near(cs.Re, 40, 1e-6, "Re");
+t("lattice Boltzmann: cylinder at Re 40 holds the free stream and matches the literature drag", () => {
+  // Tritton 1959 1.59, Dennis & Chang 1970 1.52. A coarse 10-cell cylinder at 3 % blockage reads
+  // ~1.65; at 20 cells 1.62 (box 1) / 1.59 (box 1.5)
+  const loops = entitiesToLoops([{ type: "circle", c: [0, 0], r: 10 }], 24);
+  const cs = setupCase(loops, { fluid: "air", speed: (40 * 1.516e-5) / 0.02, resolution: 10 });
+  near(cs.Re, 40, 0.01, "Re");
   const s = new LBM2D(cs);
-  while (s.passes < 30) s.step(200);
-  const m = s.mean(8);
-  assert.ok(m.cd > 1.45 && m.cd < 1.95, `Cd ${m.cd}`);
+  while (s.passes < 42) s.step(200); // the start-up ramp takes ~26 passes of this long box
+  const m = s.mean(6);
+  assert.ok(m.cd > 1.5 && m.cd < 1.72, `Cd ${m.cd} (literature 1.52-1.60)`);
   near(m.cl, 0, 0.02, "steady wake has no lift");
+  // velocity inlet and pressure outlet: the inlet column is at U and the mean density stays 1
+  const F = s.fields();
+  let u = 0, r = 0, nf = 0;
+  for (let j = 0; j < cs.ny; j++) u += F.ux[j * cs.nx];
+  for (let k = 0; k < cs.nx * cs.ny; k++) if (!cs.solid[k]) { r += F.rho[k]; nf++; }
+  near(u / cs.ny / cs.U, 1, 0.01, "inlet u / U");
+  near(r / nf, 1, 0.005, "mean density");
 });
 
 // ---------------------------------------------------------------- shape optimization

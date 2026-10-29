@@ -82,7 +82,9 @@ CAD Modeler and CFD Sim talk through a **case folder** on disk. CAD writes the g
     "precision": "fp16c",                // fp16c | fp16 | fp32
     "flowThroughs": 3,                   // run duration
     "frames": null,                      // playback frames; default comes from the quality preset (60..200)
-    "gpu": true
+    "gpu": true,
+    "maxBlockage": 0.01                  // optional; side/top padding grows until bbox frontal area / tunnel section <= this.
+                                         //   CFD default 0.01; 0 = the old fixed 1.5 L box (see "Domain size" below)
   },
 
   "estimates": { "lengthM": 0.2, "frontalAreaM2": 0.012083, "reynolds": 133333 },  // informational, from CAD
@@ -147,8 +149,17 @@ Written once per run. A new run deletes the old `results.json` first.
   "steps": 5200, "steps_total": 5200, "t_sim_s": 0.26, "frames": 2,
   "timings": { "startedAt": "...", "finishedAt": "...", "wall_s": 6.1, "steps_per_s": 852.6 },
   "backend": "gpu",
+  "blockage": 0.0098,              // voxel frontal area / free-slip tunnel cross-section (full-model equivalent)
+  "Cd_maskell": 1.02,              // extra only: Cd / (1 + 2.5 Cd blockage) (Maskell bluff-body correction); Cd is uncorrected
+  "convergence": { "Cd_previous_window": 1.03, "drift": 0.012, "Cd_std_window": 0.02, "converged": true, "note": "..." },
   "error": "traceback, only when failed" }
 ```
+
+`convergence.drift` compares the averaging window (last 20 %) with the 20 % before it; `converged` is |drift| ≤ 3 %. When it is false, run more flow-throughs.
+
+### Domain size (blockage)
+
+CFD Sim's lateral walls are free-slip, so the domain behaves like a wind tunnel. Its padding is 2 L upstream, 4 L downstream, and at least 1.5 L on the sides and top (L = longest body dimension). The side and top padding is then widened, by the same distance on every lateral face, until the bounding-box frontal area is at most `maxBlockage` (default 1 %) of the tunnel cross-section. A compact body such as a cube or sphere gets about 4.5 L per side. A car (L = its length) is barely changed. The extra room is on the coarsest grid only, so the cells across the body (from the quality budget, which ignores the widening) stay the same. A draft cube grows from 8.4 M to 10.2 M cells and 0.47 GB to 0.54 GB, with a few percent more time. Before this (fixed 1.5 L, ~6 % blockage) the cube read Cd 1.34 against 1.05 (bug 2026-10-26_18-12-24).
 
 Coefficient convention: `C = F / (½ ρ U² A_ref)`. Drag acts along the flow, lift along `flow.up`, and side force along up × flow. `forces_cad_N` = Rᵀ·[drag, side, lift], where R maps CAD to sim axes.
 

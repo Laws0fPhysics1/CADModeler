@@ -136,8 +136,8 @@ export function openFlow2D(ctx) {
     st.spf = Math.max(10, Math.min(2000, Math.round(st.spf * (dt > 0 ? Math.min(1.5, Math.max(0.6, 14 / dt)) : 1.5) / 10) * 10));
     if (P.stream && performance.now() - st.lastLines > 350) { st.fields = st.sim.fields(st.fields); st.lines = streamlines(st.fields, st.cs); st.lastLines = performance.now(); }
     render();
-    // stop by itself after 40 chord passes; the averages have long settled by then
-    if (st.sim.passes > 40) { setRunning(false); toast("2D Flow: 40 chord passes done, paused"); }
+    // stop by itself 40 chord passes after the start-up ramp; the averages have long settled by then
+    if (st.sim.passes > 40 + (st.sim.ramp * st.cs.U) / st.cs.refCells) { setRunning(false); toast("2D Flow: 40 chord passes after the start-up done, paused"); }
     if (st.running) st.raf = requestAnimationFrame(tick);
   }
 

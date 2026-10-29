@@ -696,7 +696,15 @@ function offsetSheet(sheet, nFaces, nFree, dist) {
 // 2026-10-20 19:27), else a ruled surface.
 function sideFaces(e, g) {
   const oc = R.getOC();
-  try {
+  // closed boundary edges (the rims of a cylinder, a hole wall or a revolved fillet): the wire below would walk a
+  // zero-width slit at the seam twice, which made the slab and every body fused with it invalid (bug report
+  // 2026-10-26 17:47). Coplanar rims become one planar ring face (the larger rim outside, the other a hole);
+  // others fall through to the ruled surface, which handles closed wires.
+  const closed = (x) => V.dist(tup(x.startPoint), tup(x.endPoint)) < 1e-7;
+  if (closed(e) && closed(g)) {
+    const ring = planarRing(e, g);
+    if (ring) return [ring];
+  } else try {
     const a0 = tup(e.startPoint), a1 = tup(e.endPoint);
     let b0 = tup(g.startPoint), b1 = tup(g.endPoint);
     if (V.dist(a0, b1) + V.dist(a1, b0) < V.dist(a0, b0) + V.dist(a1, b1)) [b0, b1] = [b1, b0];
@@ -715,6 +723,29 @@ function sideFaces(e, g) {
     ts.Build(new oc.Message_ProgressRange());
     return R.cast(ts.Shape()).faces;
   } finally { ts.delete(); w1.delete(); w2.delete(); }
+}
+// Planar face between two closed coplanar edges (null when they aren't coplanar).
+function planarRing(e, g) {
+  const oc = R.getOC();
+  const [outer, inner] = R.measureLength(e) >= R.measureLength(g) ? [e, g] : [g, e];
+  let best = null, bestArea = Infinity;
+  for (const hole of [inner.wrapped, R.cast(inner.wrapped.Reversed()).wrapped]) {
+    const wo = new oc.BRepBuilderAPI_MakeWire(outer.wrapped), wi = new oc.BRepBuilderAPI_MakeWire(hole);
+    let mk = null;
+    try {
+      mk = new oc.BRepBuilderAPI_MakeFace(wo.Wire(), true);
+      if (!mk.IsDone()) return null;
+      const plane = R.cast(mk.Face());
+      const n = V.norm(tup(faceNormal(plane))), o = tup(outer.startPoint);
+      for (const t of [0, 0.25, 0.5, 0.75]) if (Math.abs(V.dot(V.sub(tup(inner.pointAt(t)), o), n)) > 1e-6) return null;
+      mk.Add(wi.Wire());
+      if (!mk.IsDone()) continue;
+      // the hole wire must run against the outer one; the wrong way round the "ring" covers both discs
+      const face = R.cast(mk.Face()), area = R.measureArea(face);
+      if (area > 0 && area < bestArea) { best = face; bestArea = area; }
+    } catch (err) { /* try the other orientation */ } finally { wo.delete(); wi.delete(); if (mk) mk.delete(); }
+  }
+  return best;
 }
 function offsetSlabRaw(faces, d) {
   const oc = R.getOC();
@@ -916,12 +947,43 @@ function placeStock(f, built, fr) {
   return out;
 }
 
+/**
+ * The plane a sketch lies on in state st. A construction plane's current plane; a sketch on a face re-resolves
+ * that face (like a construction plane on a face does), so an upstream edit that moves the face takes the sketch
+ * with it (bug report 2026-10-26 17:44: a hole sketched on a plate's top face stayed at the old height after the
+ * plate got thicker and silently became blind). The stored plane's 2D frame is carried over: its normal is
+ * turned onto the face's by the smallest rotation and its origin projected onto the face, so the sketch keeps
+ * its coordinates (and its projected model origin). A lost or non-planar face keeps the stored plane.
+ */
+export function sketchPlane(st, f) {
+  const pr = f.planeRef;
+  if (pr && pr.kind === "cplane" && st.planes[pr.id]) return st.planes[pr.id].plane;
+  if (pr && pr.kind === "face" && pr.ref && f.plane && st.bodies.some((b) => b.id === pr.ref.body)) {
+    try {
+      const { face } = resolveFace(st, pr.ref);
+      if (face.geomType === "PLANE") return followPlane(f.plane, planeFromFace(face));
+    } catch (e) { /* keep the stored plane */ }
+  }
+  return f.plane;
+}
+/** Plane `old` moved onto plane `to` (same normal and height) keeping its in-plane frame. */
+export function followPlane(old, to) {
+  const n0 = V.norm(old.normal), n1 = V.norm(to.normal);
+  const c = V.dot(n0, n1);
+  if (c < -0.999999) return old;                  // flipped: the face match is the wrong side, keep it
+  let xDir = V.norm(old.xDir);
+  const ax = V.cross(n0, n1), s = V.len(ax);
+  if (s > 1e-12) xDir = V.norm(rotVec(xDir, ax, (Math.atan2(s, c) * 180) / Math.PI));
+  xDir = V.norm(V.sub(xDir, V.mul(n1, V.dot(xDir, n1))));
+  const origin = V.add(old.origin, V.mul(n1, V.dot(V.sub(to.origin, old.origin), n1)));
+  return { origin, xDir, normal: n1 };
+}
+
 export function applyFeature(st, f) {
   st.lastTool = null;
   switch (f.type) {
     case "sketch": {
-      let plane = f.plane;
-      if (f.planeRef && f.planeRef.kind === "cplane" && st.planes[f.planeRef.id]) plane = st.planes[f.planeRef.id].plane;
+      const plane = sketchPlane(st, f);
       const entities = isModel(f) ? flatten(f) : f.entities;
       // host: the body whose face the sketch is on; it follows that body's assembly placement on screen
       const host = f.planeRef && f.planeRef.kind === "face" && f.planeRef.ref ? f.planeRef.ref.body || null
@@ -965,8 +1027,16 @@ export function applyFeature(st, f) {
       if (!(f.edges || []).length) throw new Error("No edges selected");
       const v = f.type === "fillet" ? f.radius : f.distance;
       if (!(v > 0)) throw new Error("Size must be positive");
+      // OCCT can hand back an invalid solid instead of failing when the size is too large for the edge (bug report
+      // 2026-10-26 17:44: an r20 fillet on an 8 mm flange "grew" the body by 6.8 cm³). Check the result and refuse
+      // it, unless the body was already invalid (then the check says nothing about this feature).
+      const tooBig = f.type === "fillet" ? "Fillet radius too large for this edge" : "Chamfer distance too large for this edge";
       for (const [body, edges] of groupByBody(f.edges, st, resolveEdge)) {
-        body.shape = f.type === "fillet" ? body.shape.fillet(v, (e) => e.inList(edges)) : body.shape.chamfer(v, (e) => e.inList(edges));
+        let out;
+        try { out = f.type === "fillet" ? body.shape.fillet(v, (e) => e.inList(edges)) : body.shape.chamfer(v, (e) => e.inList(edges)); }
+        catch (e) { throw new Error(isOcctException(e) ? `${tooBig} (or OCCT can't ${f.type} these edges)` : (e && e.message) || String(e)); }
+        if (!out || !hasSolid(out) || (!isValidShape(out) && isValidShape(body.shape))) throw new Error(tooBig);
+        body.shape = out;
       }
       break;
     }
@@ -978,6 +1048,8 @@ export function applyFeature(st, f) {
         const unchanged = (s) => Math.abs(R.measureVolume(s) - before) < 1e-6 * Math.max(1, before);
         let out = null;
         try { out = body.shape.shell(f.thickness, (ff) => ff.inList(faces)); } catch (e) { out = null; }
+        // like fillets, a too-thick wall can come back as an invalid solid instead of an error
+        if (out && !unchanged(out) && !isValidShape(out) && isValidShape(body.shape)) out = null;
         // OCCT hands back the input unchanged when the removed face is tangent to a kept one
         // (e.g. next to a fillet); fall back to hollowing by an inward offset and cutting the openings
         const fail = "Shell failed: make the wall thinner than the smallest fillet radius";
@@ -998,14 +1070,30 @@ export function applyFeature(st, f) {
       const d = +f.distance;
       if (!isFinite(d)) throw new Error("Distance must be a number");
       if (Math.abs(d) < 1e-9) break;
+      // The result is checked with BRepCheck: on curved faces (a hole wall, a cylinder's side, a fillet's torus) the
+      // joined slab is not a valid solid (the seam edge), and fusing it gave an invalid compound with the right volume
+      // that broke later fillets, STEP export and FEA (bug report 2026-10-26 17:47). Each group tries the joined slab,
+      // then one MakeThickSolidBySimple slab per face, and keeps the first valid body (ShapeFix_Shape isn't in this build).
       for (const [body, faces] of groupByBody(f.faces, st, resolveFace)) {
+        const wasValid = isValidShape(body.shape);
         let out = body.shape;
         for (const group of touchingGroups(faces)) {
-          let slabs;
-          try { slabs = [offsetSlab(group, d)]; } catch (e) { slabs = group.map((face) => thickenFace(face, d)); }
-          for (const slab of slabs) out = d > 0 ? out.fuse(slab) : out.cut(slab);
+          const builds = [() => [offsetSlab(group, d)], () => group.map((face) => thickenFace(face, d))];
+          let done = null, firstSolid = null;
+          for (const build of builds) {
+            let next = out;
+            try {
+              for (const slab of build()) next = d > 0 ? next.fuse(slab) : next.cut(slab);
+              try { const s = next.simplify(); if (s && hasSolid(s)) next = s; } catch (e) { /* keep the split faces */ }
+            } catch (e) { continue; }
+            if (!hasSolid(next)) { firstSolid = firstSolid || next; continue; }
+            if (!wasValid || isValidShape(next)) { done = next; break; }
+            firstSolid = firstSolid || next;
+          }
+          if (!done && firstSolid && !hasSolid(firstSolid)) throw new Error("Offset removed the whole body");
+          if (!done) throw new Error("Offset Face couldn't make a valid solid with this distance on these faces (try a smaller distance)");
+          out = done;
         }
-        try { const s = out.simplify(); if (s && hasSolid(s)) out = s; } catch (e) { /* keep the split faces */ }
         if (!hasSolid(out)) throw new Error("Offset removed the whole body");
         body.shape = out;
       }
@@ -1118,6 +1206,34 @@ export function cloneState(st) {
 
 /** The most recent feature failure's stack (debugging aid: __K.lastFeatureError). */
 export const lastFeatureError = { feature: null, stack: null };
+/** True for a raw OCCT (C++) exception thrown out of the WASM build. */
+export function isOcctException(e) {
+  return (typeof WebAssembly !== "undefined" && WebAssembly.Exception && e instanceof WebAssembly.Exception) || String(e) === "[object WebAssembly.Exception]";
+}
+/** BRepCheck_Analyzer: is the shape a valid B-rep? (true when the check itself can't run) */
+export function isValidShape(shape) {
+  const oc = R.getOC();
+  let an = null;
+  try {
+    an = new oc.BRepCheck_Analyzer(shape.wrapped, true, false);
+    return !!(an.IsValid_2 || an.IsValid_1 || an.IsValid).call(an);
+  } catch (e) { return true; } finally { if (an) an.delete(); }
+}
+const FEATURE_LABEL = { sketch: "Sketch", extrude: "Extrude", revolve: "Revolve", fillet: "Fillet", chamfer: "Chamfer", shell: "Shell", offsetFace: "Offset Face", box: "Box", cylinder: "Cylinder", sphere: "Sphere", plane: "Construction plane", import: "Import", insert: "Insert", remove: "Remove", fastener: "Fastener", stock: "Stock", gear: "Gear", move: "Move" };
+/**
+ * The text a failed feature shows in the timeline. Raw OCCT exceptions used to show as
+ * "[object WebAssembly.Exception]" (bug report 2026-10-26 17:44); they now name the feature and OCCT's own message.
+ */
+export function featureErrorText(e, f) {
+  if (!isOcctException(e)) return (e && e.message) || String(e);
+  let detail = "";
+  try { const m = R.getOC().getExceptionMessage(e); detail = (Array.isArray(m) ? m.filter(Boolean).join(": ") : String(m || "")).trim(); } catch (x) { /* no message */ }
+  const label = (f && FEATURE_LABEL[f.type]) || "Feature";
+  const hint = f && f.type === "fillet" ? ": the radius is probably too large for the selected edges"
+    : f && f.type === "chamfer" ? ": the distance is probably too large for the selected edges"
+    : f && f.type === "shell" ? ": try a thinner wall" : "";
+  return `${label} failed${hint} (geometry kernel error${detail ? `: ${detail}` : ""})`;
+}
 /**
  * Incremental replay: the state after each timeline prefix is cached under a key built from the
  * features' contents, so a rebuild only re-runs features from the first one that changed. Deleting a
@@ -1164,7 +1280,7 @@ export function evaluate(features, upTo = features.length) {
       try { applyFeature(st, f); }
       catch (e) {
         Object.assign(st, backup);
-        st.errors[f.id] = (e && e.message) || String(e);
+        st.errors[f.id] = featureErrorText(e, f);
         lastFeatureError.feature = f.id; lastFeatureError.stack = (e && e.stack) || String(e); // for debugging
       }
     }
@@ -1186,7 +1302,7 @@ export function featureTool(st, f) {
 export function previewFeature(base, f) {
   const st = cloneState(base);
   try { applyFeature(st, f); return { state: st, error: null }; }
-  catch (e) { const s = cloneState(base); return { state: s, error: (e && e.message) || String(e) }; }
+  catch (e) { const s = cloneState(base); return { state: s, error: featureErrorText(e, f) }; }
 }
 
 // project a planar face's boundary edges into sketch entities (Fusion's auto-project)

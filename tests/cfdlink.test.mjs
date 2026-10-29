@@ -59,6 +59,13 @@ bad.flow.direction = "+W"; bad.units = "m"; bad.solver.levels = 9; delete bad.re
 const bv = L.validateCase(bad);
 assert(!bv.ok && bv.errors.length === 4, "validator reports 4 errors: " + bv.errors.join(" | "));
 assert(!L.validateCase("{nope").ok, "validator rejects bad JSON");
+{
+  const { caseData } = await L.buildCase({ designName: "Blk", bodies: [{ id: "b1", name: "B" }], stlBytes: stl, options: { solver: { maxBlockage: 0.02 } } });
+  assert(caseData.solver.maxBlockage === 0.02 && L.validateCase(caseData).ok, "solver.maxBlockage passes through and validates");
+  assert(!L.validateCase({ ...caseData, solver: { ...caseData.solver, maxBlockage: 0.7 } }).ok, "validator rejects maxBlockage >= 0.5");
+  const { caseData: c0 } = await L.buildCase({ designName: "Blk", bodies: [{ id: "b1", name: "B" }], stlBytes: stl });
+  assert(!("maxBlockage" in c0.solver), "maxBlockage omitted by default (CFD default applies)");
+}
 let threw = false;
 try { await L.buildCase({ designName: "x", stlBytes: new Uint8Array(10) }); } catch { threw = true; }
 assert(threw, "buildCase rejects a non-STL");
