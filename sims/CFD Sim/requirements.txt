@@ -1,0 +1,11 @@
+numpy
+scipy
+trimesh
+vtk
+pyvista
+pyvistaqt
+PySide6
+matplotlib
+imageio
+imageio-ffmpeg
+cupy-cuda12x[ctk]   # NVIDIA GPU solver (optional but strongly recommended)

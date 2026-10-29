@@ -273,7 +273,7 @@ export function openCfdResults(ctx, study) {
         `<div class="cfd-bar"><i style="width:${(100 * frac).toFixed(1)}%"></i></div>` +
         `<div class="cfd-muted">${p.step ? `Step ${p.step.toLocaleString()} / ${(p.total || 0).toLocaleString()}` : ""}${isFinite(eta) ? ` · ${fmtTime(eta)} left` : ""}${p.elapsed_s ? ` · ${fmtTime(p.elapsed_s)} elapsed` : ""}</div>`;
     } else if (proc && proc.known && !proc.running && proc.exitCode) {
-      s += `<div class="cfd-prog-head"><b class="cfd-bad">Solver stopped (exit code ${proc.exitCode})</b></div><pre class="cfr-log">${esc(proc.logTail || "")}</pre>`;
+      s += `<div class="cfd-prog-head"><b class="cfd-bad">Solver stopped (exit code ${proc.exitCode})</b></div>${proc.hint ? `<div class="cfd-bad cfr-err">${esc(proc.hint)}</div>` : ""}<pre class="cfr-log">${esc(proc.logTail || "")}</pre>`;
     } else if (proc && proc.running) {
       s += `<div class="cfd-prog-head"><b>Starting solver…</b></div><div class="cfd-bar cfd-bar-indet"><i></i></div>`;
     } else if (!st.manifest) {

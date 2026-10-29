@@ -89,15 +89,35 @@ export function openSettings(ctx) {
     Promise.resolve(api.getConfig()).then((cfg) => {
       box.innerHTML = "";
       if (!cfg) { box.append(h("div", { class: "st-note" }, "Only available in the desktop app.")); return; }
+      // boxes hold only what the user set (cfg.overrides); the placeholder shows what is used otherwise
+      const ov = cfg.overrides || null;
+      const inUse = h("div", { class: "st-note" });
+      const showInUse = (c) => { inUse.textContent = ""; if (c && c.using) inUse.append(...inUseText(c.using)); };
       for (const [key, label] of fields) {
-        const inp = h("input", { type: "text", spellcheck: "false", value: cfg[key] || "", disabled: platform.isDesktop ? null : true });
+        const inp = h("input", { type: "text", spellcheck: "false", value: (ov ? ov[key] : cfg[key]) || "", placeholder: cfg[key] || "", disabled: platform.isDesktop ? null : true });
         inp.addEventListener("change", async () => {
-          try { const next = await api.setConfig({ [key]: inp.value.trim() }); if (next) inp.value = next[key] || ""; changed(key, inp.value); ctx.toast("Saved"); }
+          try {
+            const next = await api.setConfig({ [key]: inp.value.trim() });
+            if (next) { inp.value = (next.overrides ? next.overrides[key] : next[key]) || ""; inp.placeholder = next[key] || ""; showInUse(next); }
+            changed(key, inp.value); ctx.toast("Saved");
+          }
           catch (e) { ctx.toast(`Couldn't save: ${e.message}`); }
         });
         box.append(row(label, inp));
       }
+      showInUse(cfg);
+      if (cfg.using) box.append(inUse);
     }, (e) => { box.innerHTML = ""; box.append(h("div", { class: "st-note" }, `Couldn't read the settings: ${e.message}`)); });
+  }
+  // "In use: Bundled (…\sims\CFD Sim) · Python: bundled" from getConfig().using (electron/sim-paths.cjs)
+  function inUseText(u) {
+    const where = u.dirSource === "missing" ? "Not installed: run Update CAD Modeler.bat (needs Python 3.12 from python.org)" : u.label;
+    const py = u.pythonSource === "bundled" ? "bundled (sims\\.venv)" : u.pythonSource === "custom" ? u.pythonCmd : `${u.pythonCmd} (system)`;
+    const out = [h("b", {}, "In use: "), where];
+    if (u.dirSource !== "missing") out.push(h("span", { title: u.dir }, ` (${u.dir})`));
+    out.push(" · Python: ", py);
+    if (u.overrideMissing) out.push(h("div", { class: "cfd-bad" }, "The folder set above doesn't exist, so it isn't used."));
+    return out;
   }
   function resetAll() {
     if (!confirm("Reset all settings to their defaults?\n\nYour designs are not affected. The app reloads.")) return;

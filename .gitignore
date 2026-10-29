@@ -64,3 +64,12 @@ Pull Bug Reports.bat
 *.igs
 *.3mf
 !examples/**
+
+# Bundled simulations: sims/ is a generated mirror of the owner's CFD Sim and
+# FEA Sim folders (see sims/README.md). Its Python env, run output and caches stay local.
+sims/.venv/
+sims/**/runs/
+sims/**/samples/
+__pycache__/
+*.pyc
+*.bak

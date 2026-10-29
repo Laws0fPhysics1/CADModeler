@@ -16,6 +16,7 @@ const path = require("node:path");
 const fs = require("node:fs");
 const fsp = require("node:fs/promises");
 const { spawn, execFile } = require("node:child_process");
+const simPaths = require("./sim-paths.cjs");
 
 const STOP_FILE = "stop.request";
 const STOP_GRACE_MS = 30000;
@@ -48,11 +49,7 @@ function toBuffer(data) {
 // readable files: viz/<name>, top-level *.json / *.log / *.stl
 const READABLE = /^(viz[\\/][\w.-]+|[\w.-]+\.(json|log|stl))$/i;
 
-function splitCmd(pythonCmd) {
-  if (fs.existsSync(pythonCmd)) return { exe: pythonCmd, pre: [] };
-  const parts = String(pythonCmd).split(/\s+/).filter(Boolean);
-  return { exe: parts[0], pre: parts.slice(1) };
-}
+const splitCmd = simPaths.splitCmd;
 
 function tail(file, lines = 12) {
   try { return fs.readFileSync(file, "utf8").replace(/\r/g, "").trim().split("\n").slice(-lines).join("\n"); } catch { return ""; }
@@ -62,10 +59,30 @@ function tail(file, lines = 12) {
  * @param {{ getConfig: () => { cfdDir: string, pythonCmd: string, exchangeDir: string } }} opts
  * The optional keys let other solvers reuse this runner (electron/fea-runner.cjs): appDirKey names the
  * config key of the solver's folder (holding main.py), logName the per-case log file, label the
- * solver's name in error messages. The defaults are CFD Sim's.
+ * solver's name in error messages. The defaults are CFD Sim's. `requires` ({ modules, gpu }) is what
+ * the pre-launch check (sim-paths.cjs checkPython) looks for; `preflight: false` skips it.
  */
-function createCfdRunner({ getConfig, appDirKey = "cfdDir", logName = "cfd-run.log", label = "CFD solver", settingsHint = "Set the CFD Sim folder in the CFD Study settings." }) {
+function createCfdRunner({ getConfig, appDirKey = "cfdDir", logName = "cfd-run.log", label = "CFD solver", settingsHint = "Or set the CFD Sim folder in Settings > Simulation.",
+  requires = simPaths.SIMS.cfd, preflight = true }) {
   const procs = new Map(); // case dir -> { child, pid, startedAt, exitCode, log, killTimer }
+  // Python + packages (+ GPU) are checked once per python / folder / mode; a failure is re-checked on the next Solve
+  const checked = new Set();
+  const starting = new Set(); // case dirs between the pre-launch check and spawn
+  async function check(pythonCmd, simDir, cpu) {
+    if (!preflight) return { ok: true };
+    const gpu = !!requires.gpu && !cpu;
+    const key = [pythonCmd, simDir, gpu].join("|");
+    if (checked.has(key)) return { ok: true };
+    const r = await simPaths.checkPython({ pythonCmd, cwd: simDir, modules: requires.modules || [], gpu });
+    if (r.ok) checked.add(key);
+    return r;
+  }
+  function failText(code, log) {
+    const why = simPaths.friendlyError(tail(log, 60));
+    const t = tail(log);
+    if (why) return why + (t ? "\n\n" + t : "");
+    return `${label} exited with code ${code}${t ? `:\n${t}` : ""}`;
+  }
 
   function caseDir(casePath) {
     if (typeof casePath !== "string" || !casePath) throw new Error("casePath must be a string");
@@ -116,7 +133,14 @@ function createCfdRunner({ getConfig, appDirKey = "cfdDir", logName = "cfd-run.l
     const cfg = getConfig();
     const cfdDir = cfg[appDirKey], pythonCmd = cfg.pythonCmd;
     const mainPy = path.join(cfdDir, "main.py");
-    if (!fs.existsSync(mainPy)) return { ok: false, error: `${label} not found: ${mainPy} does not exist. ${settingsHint}` };
+    if (!fs.existsSync(mainPy)) return { ok: false, error: `${simPaths.NOT_INSTALLED} (${label} not found: ${mainPy} does not exist. ${settingsHint})` };
+    if (starting.has(dir)) return { ok: false, error: "A simulation is already starting for this case" };
+    starting.add(dir);
+    let pre0;
+    try { pre0 = await check(pythonCmd, cfdDir, cpu); } finally { starting.delete(dir); }
+    if (!pre0.ok) return { ok: false, error: pre0.error };
+    const again = procs.get(dir);
+    if (again && again.exitCode == null) return { ok: false, error: "A simulation is already running for this case" };
     for (const f of [STOP_FILE, "results.json", "progress.json"]) { try { fs.rmSync(path.join(dir, f), { force: true }); } catch {} }
     const { exe, pre } = splitCmd(pythonCmd);
     const log = path.join(dir, logName);
@@ -132,12 +156,12 @@ function createCfdRunner({ getConfig, appDirKey = "cfdDir", logName = "cfd-run.l
     procs.set(dir, rec);
     const started = await new Promise((resolve) => {
       const t = setTimeout(() => resolve({ ok: true, pid: child.pid }), 1500);
-      child.once("error", (err) => { clearTimeout(t); rec.exitCode = -1; resolve({ ok: false, error: `Could not start "${pythonCmd}": ${err.message}` }); });
+      child.once("error", (err) => { clearTimeout(t); rec.exitCode = -1; resolve({ ok: false, error: err.code === "ENOENT" ? `Python not found ("${pythonCmd}"). ${simPaths.NOT_INSTALLED}` : `Could not start "${pythonCmd}": ${err.message}` }); });
       child.once("exit", (code) => {
         rec.exitCode = code == null ? -1 : code;
         if (rec.killTimer) clearTimeout(rec.killTimer);
         clearTimeout(t);
-        resolve(code === 0 ? { ok: true, pid: child.pid } : { ok: false, error: `${label} exited with code ${code}${tail(log) ? `:\n${tail(log)}` : ""}` });
+        resolve(code === 0 ? { ok: true, pid: child.pid } : { ok: false, error: failText(code, log) });
       });
     });
     return started;
@@ -163,8 +187,9 @@ function createCfdRunner({ getConfig, appDirKey = "cfdDir", logName = "cfd-run.l
     const dir = caseDir(casePath);
     const rec = procs.get(dir);
     if (!rec) return { running: false, known: false };
+    const failed = rec.exitCode != null && rec.exitCode !== 0;
     return { running: rec.exitCode == null, known: true, pid: rec.pid, exitCode: rec.exitCode, startedAt: rec.startedAt,
-      logTail: rec.exitCode != null && rec.exitCode !== 0 ? tail(rec.log, 20) : "" };
+      logTail: failed ? tail(rec.log, 20) : "", hint: failed ? simPaths.friendlyError(tail(rec.log, 60)) : null };
   }
 
   /** Stop everything (app quit): ask nicely, then kill whatever is left after `ms`. */

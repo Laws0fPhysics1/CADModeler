@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import path from "node:path";
 import { createRequire } from "node:module";
+import { fileURLToPath } from "node:url";
 
 // Shared with the Electron main process so both write the same folder layout.
 const require = createRequire(import.meta.url);
@@ -9,6 +10,7 @@ const { createCfdRunner } = require("./electron/cfd-runner.cjs");
 const { createFeaRunner, feaDefaults, createDevHandler: createFeaHandler } = require("./electron/fea-runner.cjs");
 const os = require("node:os");
 const partsStore = require("./electron/parts-store.cjs");
+const simPaths = require("./electron/sim-paths.cjs");
 
 const MAX_BODY = 30 * 1024 * 1024; // screenshots + designs; ~25 MB payloads
 
@@ -82,16 +84,24 @@ function partsPlugin() {
 
 // ---------- in-app CFD (dev server only; the desktop app uses IPC) ----------
 // Same runner and defaults as electron/main.cjs, so the browser preview can run and show CFD studies.
-const CFD_CONFIG = {
-  cfdDir: process.env.CAD_CFD_DIR || path.join(os.homedir(), "Documents", "CFD Sim"),
-  pythonCmd: process.env.CAD_CFD_PYTHON || "python",
-  exchangeDir: process.env.CAD_CFD_EXCHANGE || path.join(os.homedir(), "Documents", "CAD-CFD Exchange"),
-};
+// Folder + Python by the same rules as the desktop app (electron/sim-paths.cjs); CAD_*_DIR / CAD_*_PYTHON
+// play the part of the Settings overrides.
+const DEV_DOCS = path.join(os.homedir(), "Documents");
+function devSimConfig(kind, base, env) {
+  const overrides = {};
+  if (env.dir) overrides[kind + "Dir"] = env.dir;
+  if (env.python) overrides.pythonCmd = env.python;
+  const r = simPaths.resolveSim(kind, { overrides, documents: DEV_DOCS, roots: simPaths.appRoots({ root: fileURLToPath(new URL(".", import.meta.url)), packaged: false }) });
+  return { ...base, [kind + "Dir"]: r.dir, pythonCmd: r.pythonCmd, overrides,
+    using: { dir: r.dir, dirSource: r.dirSource, label: r.label, overrideMissing: r.overrideMissing, pythonCmd: r.pythonCmd, pythonSource: r.pythonSource } };
+}
+const CFD_CONFIG = () => devSimConfig("cfd", { exchangeDir: process.env.CAD_CFD_EXCHANGE || path.join(DEV_DOCS, "CAD-CFD Exchange") },
+  { dir: process.env.CAD_CFD_DIR, python: process.env.CAD_CFD_PYTHON });
 function cfdPlugin() {
   return {
     name: "cfd-runner",
     configureServer(server) {
-      const runner = createCfdRunner({ getConfig: () => CFD_CONFIG });
+      const runner = createCfdRunner({ getConfig: CFD_CONFIG });
       server.httpServer?.once("close", () => runner.stopAll(3000));
       server.middlewares.use("/api/cfd", async (req, res) => {
         const send = (status, obj) => { res.statusCode = status; res.setHeader("Content-Type", "application/json"); res.end(JSON.stringify(obj)); };
@@ -100,7 +110,7 @@ function cfdPlugin() {
           const a = JSON.parse(await readBody(req));
           let out;
           switch (a.op) {
-            case "getConfig": out = CFD_CONFIG; break;
+            case "getConfig": out = CFD_CONFIG(); break;
             case "writeCase": {
               const files = {};
               for (const [k, v] of Object.entries(a.files || {})) files[k] = v && typeof v === "object" && "b64" in v ? Buffer.from(v.b64, "base64") : String(v);
@@ -127,19 +137,15 @@ function cfdPlugin() {
 }
 
 // ---------- in-app FEA (dev server only; the desktop app uses IPC "fea:*") ----------
-const FEA_CONFIG = {
-  ...feaDefaults(),
-  ...(process.env.CAD_FEA_DIR ? { feaDir: process.env.CAD_FEA_DIR } : {}),
-  ...(process.env.CAD_FEA_PYTHON ? { pythonCmd: process.env.CAD_FEA_PYTHON } : {}),
-  ...(process.env.CAD_FEA_EXCHANGE ? { exchangeDir: process.env.CAD_FEA_EXCHANGE } : {}),
-};
+const FEA_CONFIG = () => devSimConfig("fea", { exchangeDir: process.env.CAD_FEA_EXCHANGE || feaDefaults().exchangeDir },
+  { dir: process.env.CAD_FEA_DIR, python: process.env.CAD_FEA_PYTHON });
 function feaPlugin() {
   return {
     name: "fea-runner",
     configureServer(server) {
-      const runner = createFeaRunner({ getConfig: () => FEA_CONFIG });
+      const runner = createFeaRunner({ getConfig: FEA_CONFIG });
       server.httpServer?.once("close", () => runner.stopAll(3000));
-      server.middlewares.use("/api/fea", createFeaHandler(runner, () => FEA_CONFIG, readBody));
+      server.middlewares.use("/api/fea", createFeaHandler(runner, FEA_CONFIG, readBody));
     },
   };
 }

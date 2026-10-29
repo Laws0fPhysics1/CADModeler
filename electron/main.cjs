@@ -20,6 +20,7 @@ const { createFeaRunner, feaDefaults } = require("./fea-runner.cjs");
 const { writeFolder } = require("./folder-writer.cjs");
 const { createMcMaster } = require("./mcmaster.cjs");
 const partsStore = require("./parts-store.cjs");
+const simPaths = require("./sim-paths.cjs");
 const updateCheck = require("./update-check.cjs");
 
 const ROOT = path.join(__dirname, "..");
@@ -56,7 +57,7 @@ const DOCUMENTS = (() => {
   try { return app.getPath("documents"); } catch { return local; }
 })();
 const CFD_DEFAULTS = {
-  cfdDir: path.join(os.homedir(), "Documents", "CFD Sim"),
+  cfdDir: path.join(DOCUMENTS, "CFD Sim"),
   pythonCmd: "python",
   exchangeDir: path.join(DOCUMENTS, "CAD-CFD Exchange"),
 };
@@ -77,22 +78,23 @@ function partsDir() {
   }
   return partsDirCache;
 }
-function cfdConfig() {
-  const c = readConfig().cfd || {};
-  const out = { ...CFD_DEFAULTS };
-  for (const k of Object.keys(CFD_DEFAULTS)) if (typeof c[k] === "string" && c[k].trim()) out[k] = c[k].trim();
-  return out;
+// The solvers' folder and Python (electron/sim-paths.cjs): Settings override, else Documents/<Sim> (the
+// owner's live copy), else the bundled <app root>/sims/<Sim> with its own sims/.venv python.
+const SIM_ROOTS = simPaths.appRoots({ root: ROOT, packaged: app.isPackaged, resourcesPath: process.resourcesPath, exeDir: path.dirname(process.execPath) });
+function simConfig(kind, defaults) {
+  const c = readConfig()[kind] || {};
+  const overrides = {};
+  for (const k of Object.keys(defaults)) if (typeof c[k] === "string" && c[k].trim()) overrides[k] = c[k].trim();
+  const r = simPaths.resolveSim(kind, { overrides, documents: DOCUMENTS, roots: SIM_ROOTS });
+  return { ...defaults, ...overrides, [kind + "Dir"]: r.dir, pythonCmd: r.pythonCmd, overrides,
+    using: { dir: r.dir, dirSource: r.dirSource, label: r.label, overrideMissing: r.overrideMissing, pythonCmd: r.pythonCmd, pythonSource: r.pythonSource } };
 }
+function cfdConfig() { return simConfig("cfd", CFD_DEFAULTS); }
 
 const cfdRunner = createCfdRunner({ getConfig: () => cfdConfig() });
 // FEA Sim (static stress) uses the same runner machinery with its own folder and exchange folder.
 const FEA_DEFAULTS = feaDefaults(DOCUMENTS);
-function feaConfig() {
-  const c = readConfig().fea || {};
-  const out = { ...FEA_DEFAULTS };
-  for (const k of Object.keys(FEA_DEFAULTS)) if (typeof c[k] === "string" && c[k].trim()) out[k] = c[k].trim();
-  return out;
-}
+function feaConfig() { return simConfig("fea", FEA_DEFAULTS); }
 const feaRunner = createFeaRunner({ getConfig: () => feaConfig() });
 
 const bugReportDir = () => (app.isPackaged ? path.join(DOCUMENTS, "CAD Modeler", "bug-reports") : path.join(ROOT, "bug-reports"));
@@ -449,7 +451,7 @@ function registerIpc() {
       if (!fs.existsSync(dir)) return { ok: false, error: `Case folder not found: ${dir}` };
       const { cfdDir, pythonCmd } = cfdConfig();
       const mainPy = path.join(cfdDir, "main.py");
-      if (!fs.existsSync(mainPy)) return { ok: false, error: `CFD Sim not found: ${mainPy} does not exist` };
+      if (!fs.existsSync(mainPy)) return { ok: false, error: `${simPaths.NOT_INSTALLED} (CFD Sim not found: ${mainPy} does not exist)` };
       // pythonCmd is either a path to an executable (may contain spaces) or a
       // command plus fixed args such as "py -3".
       let exe = pythonCmd, pre = [];
@@ -624,7 +626,9 @@ async function runSmoke(win) {
       checks.push(["fea: writeCase / readResults / guards", isInside(r.feaCase, r.feaCfg.exchangeDir) && r.feaRead && r.feaRead.results && r.feaRead.results.maxVonMises_MPa === 1 &&
         r.feaTraversal === "blocked" && r.feaRunOutside && r.feaRunOutside.ok === false]);
       checks.push(["parts: folder, list, guards", !!(r.partsInfo && r.partsInfo.dir && fs.existsSync(r.partsInfo.dir)) && Array.isArray(r.partsList) && r.partsTraversal === "blocked" && r.thumbOutside === false]);
-      checks.push(["update check answers (unavailable in test runs)", !!(r.update && r.update.state === "unavailable")]);
+      checks.push([`sim folders resolved (CFD: ${r.cfg.using && r.cfg.using.label}, ${r.cfg.using && r.cfg.using.pythonSource} python; FEA: ${r.feaCfg.using && r.feaCfg.using.label}, ${r.feaCfg.using && r.feaCfg.using.pythonSource} python)`,
+        !!(r.cfg.using && r.feaCfg.using && r.cfg.cfdDir === r.cfg.using.dir && r.feaCfg.feaDir === r.feaCfg.using.dir && r.cfg.overrides && r.feaCfg.overrides)]);
+      checks.push(["update check answers (unavailable in test runs)",!!(r.update && r.update.state === "unavailable")]);
       if (r.feaCase && isInside(r.feaCase, r.feaCfg.exchangeDir)) fs.rmSync(r.feaCase, { recursive: true, force: true });
       // saveFolder's writer (the IPC handler itself needs a folder dialog, so call the writer directly)
       try {

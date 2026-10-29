@@ -9,7 +9,13 @@ A single-part parametric 3D modeler that looks and feels like Fusion 360. It run
 3. Double-click **`Update CAD Modeler.bat`** in the cloned folder. It pulls the latest version, installs dependencies, builds and launches the app. Run it again any time to update.
 4. You don't have to remember to check: the start screen says when an update is out ("Update available") and its **Update now** button closes the app and runs `Update CAD Modeler.bat` for you.
 
-Saved designs go in the `Parts` folder inside the app folder (created on first use). Your Parts folder and design files never leave your PC. CFD and FEA studies need the separate CFD Sim / FEA Sim Python projects, so they won't run without those; everything else works.
+Saved designs go in the `Parts` folder inside the app folder (created on first use). Your Parts folder and design files never leave your PC.
+
+**Simulations (optional).** CFD and FEA studies run Python code that ships with the app (in `sims\`). To turn them on, install [Python 3.12](https://www.python.org/downloads/) (3.10 to 3.13 also work) and tick **"Add python.exe to PATH"** on the installer's first screen, then run `Update CAD Modeler.bat` again. It builds a private Python environment in `sims\.venv` and installs the packages there; it tells you at the end whether CFD and FEA are ready.
+- The first update with Python downloads about 500 MB (PySide6, VTK, gmsh, SciPy), plus about 1.7 GB more for CuPy and its CUDA libraries on a PC with an NVIDIA card. That is 1.6 GB on disk, or 3.9 GB with CuPy, and about 5 minutes on fast internet (longer on slow). Later updates only reinstall when the requirements change.
+- **FEA (static stress)** works on any PC. **CFD** inside the app needs an NVIDIA graphics card (CUDA 12 driver); without one, the CFD study won't run.
+- Without Python everything else in CAD Modeler works as normal.
+- Keep the app folder path short (the default `Documents\CAD Modeler` is fine): PySide6 nests files about 150 characters deep, and Windows refuses paths over 260 characters unless long paths are enabled. The update warns you if the path is too long.
 
 **Found a bug?** Use the **Bug report** (or Feature request) button inside the app, then double-click **`Send Bug Reports.bat`**. It uploads your reports (memo, recent clicks/keys, screenshot) to the `bugs` branch of your own fork, where the owner collects them. Your design file is not included. One-time setup: a free GitHub account and one click on **Fork** (the script opens the page and walks you through it); no collaborator access is needed. The repo is public, so the reports you send are public too.
 

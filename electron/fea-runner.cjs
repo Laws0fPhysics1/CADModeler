@@ -12,11 +12,16 @@
 const path = require("node:path");
 const os = require("node:os");
 const { createCfdRunner } = require("./cfd-runner.cjs");
+const { SIMS } = require("./sim-paths.cjs");
 
-/** Defaults for the FEA side; `documents` lets Electron pass its resolved Documents folder. */
+/**
+ * Defaults for the FEA side; `documents` lets Electron pass its resolved Documents folder. These are
+ * the fallbacks only: main.cjs and vite.config.js pick the folder and Python with sim-paths.cjs
+ * (Settings override → Documents\FEA Sim → <app root>\sims\FEA Sim).
+ */
 function feaDefaults(documents = path.join(os.homedir(), "Documents")) {
   return {
-    feaDir: path.join(os.homedir(), "Documents", "FEA Sim"),
+    feaDir: path.join(documents, "FEA Sim"),
     pythonCmd: "python",
     exchangeDir: path.join(documents, "CAD-FEA Exchange"),
   };
@@ -33,7 +38,8 @@ function createFeaRunner({ getConfig }) {
     appDirKey: "feaDir",
     logName: "fea-run.log",
     label: "FEA solver",
-    settingsHint: "Install FEA Sim there (or set CAD_FEA_DIR for the dev server).",
+    settingsHint: "Or set the FEA Sim folder in Settings > Simulation (CAD_FEA_DIR for the dev server).",
+    requires: SIMS.fea,
   });
 }
 
